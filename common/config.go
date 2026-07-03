@@ -35,13 +35,10 @@ type Config struct {
 	LogLevel  *int   `xml:"logLevel"`
 	LogOutput string `xml:"logOutput"`
 
-	CertPath      string `xml:"certPath"`
-	KeyPath       string `xml:"keyPath"`
-	CertPathWii   string `xml:"certDerPathWii"`
-	KeyPathWii    string `xml:"keyPathWii"`
-	CertPathDS    string `xml:"certDerPathDS"`
-	WiiCertPathDS string `xml:"wiiCertDerPathDS"`
-	KeyPathDS     string `xml:"keyPathDS"`
+	CertPath    string `xml:"certPath"`
+	KeyPath     string `xml:"keyPath"`
+	WiiCertPath string `xml:"wiiCertPath"`
+	WiiKeyPath  string `xml:"wiiKeyPath"`
 
 	APISecret string `xml:"apiSecret"`
 

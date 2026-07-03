@@ -50,14 +50,9 @@
      <enableHttpsExploitWii>false</enableHttpsExploitWii>
      <enableHttpsExploitDS>false</enableHttpsExploitDS>
 
-     <!-- Path to the certificate and key used for the Wii DNS exploit -->
-     <certDerPathWii>naswii-cert.der</certDerPathWii>
-     <keyPathWii>naswii-key.pem</keyPathWii>
-
-     <!-- Path to the certificate, Wii client certificate and key used for the DS DNS exploit -->
-     <certDerPathDS>nas-cert.der</certDerPathDS>
-     <wiiCertDerPathDS>nwc.der</wiiCertDerPathDS>
-     <keyPathDS>nas-key.pem</keyPathDS>
+     <!-- Path to the Wii client certificate and key used for the DS DNS exploit -->
+     <wiiCertPath>nwc.pem</wiiCertPath>
+     <wiiKeyPath>nwc-key.pem</wiiKeyPath>
 
      <!-- Allow default Dolphin device keys to be used -->
      <allowDefaultDolphinKeys>true</allowDefaultDolphinKeys>

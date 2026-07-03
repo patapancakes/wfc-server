@@ -10,6 +10,7 @@ import (
 	"crypto/sha1"
 	"crypto/tls"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/binary"
 	"encoding/pem"
 	"errors"
@@ -58,7 +59,7 @@ func setupTLS(config common.Config) {
 	// Handle requests from Wii, DS and regular TLS
 
 	if exploitWii {
-		setupExploitWii(config)
+		setupExploitWii()
 	}
 
 	if exploitDS {
@@ -94,28 +95,24 @@ func setupRealTLS(privKeyPath string, certsPath string) {
 	realTLSConfig = &config
 }
 
-func setupExploitWii(config common.Config) {
-	certWii, err := os.ReadFile(config.CertPathWii)
+func setupExploitWii() {
+	var err error
+	rsaKeyWii, err = rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		panic(err)
 	}
 
-	rsaDataWii, err := os.ReadFile(config.KeyPathWii)
+	template := x509.Certificate{
+		Subject:            pkix.Name{CommonName: "*.nintendowifi.net"},
+		NotAfter:           time.Now().UTC().Add(time.Hour * 24 * 365 * 5),
+		SignatureAlgorithm: x509.SHA1WithRSA,
+	}
+	certWii, err := x509.CreateCertificate(rand.Reader, &template, &template, &rsaKeyWii.PublicKey, rsaKeyWii)
 	if err != nil {
 		panic(err)
 	}
 
-	rsaBlockWii, _ := pem.Decode(rsaDataWii)
-	parsedKeyWii, err := x509.ParsePKCS8PrivateKey(rsaBlockWii.Bytes)
-	if err != nil {
-		panic(err)
-	}
-
-	var ok bool
-	rsaKeyWii, ok = parsedKeyWii.(*rsa.PrivateKey)
-	if !ok {
-		panic("unexpected key type")
-	}
+	certWii = bytes.ReplaceAll(certWii, []byte{0x05, 0x00, 0x03, 0x81, 0x81}, []byte{0x04, 0x00, 0x03, 0x81, 0x81})
 
 	serverCertsRecordWii = []byte{0x16, 0x03, 0x01}
 
@@ -154,29 +151,37 @@ func setupExploitWii(config common.Config) {
 }
 
 func setupExploitDS(config common.Config) {
-	certDS, err := os.ReadFile(config.CertPathDS)
+	wiiCertPEM, err := os.ReadFile(config.WiiCertPath)
+	if err != nil {
+		panic(err)
+	}
+	wiiKeyPEM, err := os.ReadFile(config.WiiKeyPath)
 	if err != nil {
 		panic(err)
 	}
 
-	rsaDataDS, err := os.ReadFile(config.KeyPathDS)
+	wiiCertBlock, _ := pem.Decode(wiiCertPEM)
+	wiiKeyBlock, _ := pem.Decode(wiiKeyPEM)
+
+	wiiCert, err := x509.ParseCertificate(wiiCertBlock.Bytes)
+	if err != nil {
+		panic(err)
+	}
+	wiiKey, err := x509.ParsePKCS8PrivateKey(wiiKeyBlock.Bytes)
 	if err != nil {
 		panic(err)
 	}
 
-	rsaBlockDS, _ := pem.Decode(rsaDataDS)
-	parsedKeyDS, err := x509.ParsePKCS8PrivateKey(rsaBlockDS.Bytes)
+	rsaKeyDS, err = rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		panic(err)
 	}
 
-	var ok bool
-	rsaKeyDS, ok = parsedKeyDS.(*rsa.PrivateKey)
-	if !ok {
-		panic("unexpected key type")
-	}
-
-	wiiCertDS, err := os.ReadFile(config.WiiCertPathDS)
+	certDS, err := x509.CreateCertificate(rand.Reader, &x509.Certificate{
+		Subject:            pkix.Name{CommonName: "*.nintendowifi.net"},
+		NotAfter:           time.Now().UTC().Add(time.Hour * 24 * 365 * 5),
+		SignatureAlgorithm: x509.SHA1WithRSA,
+	}, wiiCert, &rsaKeyDS.PublicKey, wiiKey)
 	if err != nil {
 		panic(err)
 	}
@@ -185,24 +190,24 @@ func setupExploitDS(config common.Config) {
 
 	// Length of the record
 	certLenDS := uint32(len(certDS))
-	wiiCertLenDS := uint32(len(wiiCertDS))
+	certLenWii := uint32(len(wiiCertBlock.Bytes))
 	serverCertsRecordDS = append(serverCertsRecordDS, []byte{
-		byte((certLenDS + wiiCertLenDS + 13) >> 8),
-		byte(certLenDS + wiiCertLenDS + 13),
+		byte((certLenDS + certLenWii + 13) >> 8),
+		byte(certLenDS + certLenWii + 13),
 	}...)
 
 	serverCertsRecordDS = append(serverCertsRecordDS, 0xB)
 
 	serverCertsRecordDS = append(serverCertsRecordDS, []byte{
-		byte((certLenDS + wiiCertLenDS + 9) >> 16),
-		byte((certLenDS + wiiCertLenDS + 9) >> 8),
-		byte(certLenDS + wiiCertLenDS + 9),
+		byte((certLenDS + certLenWii + 9) >> 16),
+		byte((certLenDS + certLenWii + 9) >> 8),
+		byte(certLenDS + certLenWii + 9),
 	}...)
 
 	serverCertsRecordDS = append(serverCertsRecordDS, []byte{
-		byte((certLenDS + wiiCertLenDS + 6) >> 16),
-		byte((certLenDS + wiiCertLenDS + 6) >> 8),
-		byte(certLenDS + wiiCertLenDS + 6),
+		byte((certLenDS + certLenWii + 6) >> 16),
+		byte((certLenDS + certLenWii + 6) >> 8),
+		byte(certLenDS + certLenWii + 6),
 	}...)
 
 	serverCertsRecordDS = append(serverCertsRecordDS, []byte{
@@ -214,12 +219,12 @@ func setupExploitDS(config common.Config) {
 	serverCertsRecordDS = append(serverCertsRecordDS, certDS...)
 
 	serverCertsRecordDS = append(serverCertsRecordDS, []byte{
-		byte(wiiCertLenDS >> 16),
-		byte(wiiCertLenDS >> 8),
-		byte(wiiCertLenDS),
+		byte(certLenWii >> 16),
+		byte(certLenWii >> 8),
+		byte(certLenWii),
 	}...)
 
-	serverCertsRecordDS = append(serverCertsRecordDS, wiiCertDS...)
+	serverCertsRecordDS = append(serverCertsRecordDS, wiiCertBlock.Bytes...)
 
 	serverCertsRecordDS = append(serverCertsRecordDS, []byte{
 		0x16, 0x03, 0x00, 0x00, 0x04, 0x0E, 0x00, 0x00, 0x00,
