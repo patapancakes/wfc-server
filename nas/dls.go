@@ -66,13 +66,20 @@ func handleDownloadEndpoint(w http.ResponseWriter, r *http.Request) {
 	if actionFunc, exists := dlsActions[strings.ToLower(action)]; exists {
 		reply := actionFunc(moduleName, fields)
 
-		// TODO: return error from handlers maybe?
-		if strings.ToLower(action) == "contents" && reply == nil {
-			replyHTTPError(w, 404, "404 Not Found")
-			return
+		w.Header().Set("X-DLS-Host", "dls1.nintendowifi.net")
+		w.Header().Set("Content-Type", "text/plain")
+
+		if strings.ToLower(action) == "contents" {
+			// TODO: return error from handlers maybe?
+			if reply == nil {
+				replyHTTPError(w, 404, "404 Not Found")
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/x-dsdl")
+			w.Header().Set("Content-Disposition", "attachment; filename=\""+string(fields["contents"])+"\"")
 		}
 
-		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Content-Length", strconv.Itoa(len(reply)))
 
 		// TODO: fix crazy edge case, sending WH050_100_2011-03-07 in whole
