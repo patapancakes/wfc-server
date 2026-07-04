@@ -15,9 +15,7 @@ import (
 	"github.com/logrusorgru/aurora/v3"
 )
 
-func parseAuthRequest(r *http.Request) (map[string][]byte, error) {
-	moduleName := getModuleName(r)
-
+func parseAuthRequest(moduleName string, r *http.Request) (map[string][]byte, error) {
 	err := r.ParseForm()
 	if err != nil {
 		logging.Error(moduleName, "Failed to parse form")

@@ -105,7 +105,9 @@ func isProfanityFileCached() bool {
 }
 
 func handleAuthProfanityEndpoint(w http.ResponseWriter, r *http.Request) {
-	form, err := parseAuthRequest(r)
+	moduleName := getModuleName(r)
+
+	form, err := parseAuthRequest(moduleName, r)
 	if err != nil {
 		replyHTTPError(w, 400, "400 Bad Request")
 		return

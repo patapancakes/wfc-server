@@ -22,7 +22,7 @@ var accountActions = map[string]func(moduleName string, fields map[string][]byte
 func handleAuthAccountEndpoint(w http.ResponseWriter, r *http.Request) {
 	moduleName := getModuleName(r)
 
-	fields, err := parseAuthRequest(r)
+	fields, err := parseAuthRequest(moduleName, r)
 	if err != nil {
 		replyHTTPError(w, 400, "400 Bad Request")
 		return

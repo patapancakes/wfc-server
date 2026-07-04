@@ -28,7 +28,7 @@ var (
 func handleDownloadEndpoint(w http.ResponseWriter, r *http.Request) {
 	moduleName := "DLS:" + r.RemoteAddr
 
-	fields, err := parseAuthRequest(r)
+	fields, err := parseAuthRequest(moduleName, r)
 	if err != nil {
 		replyHTTPError(w, 400, "400 Bad Request")
 		return
