@@ -15,10 +15,6 @@ import (
 	"github.com/logrusorgru/aurora/v3"
 )
 
-var (
-	dlcDir = "./dlc"
-)
-
 func parseAuthRequest(r *http.Request) (map[string][]byte, error) {
 	moduleName := getModuleName(r)
 
