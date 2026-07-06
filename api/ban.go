@@ -51,7 +51,7 @@ func HandleBan(w http.ResponseWriter, r *http.Request) {
 
 	length := time.Duration(minutes) * time.Minute
 
-	if !db.BanUser(req.ProfileID, req.Tos, length, req.Reason, req.ReasonHidden, moderator) {
+	if !db.BanProfile(req.ProfileID, req.Tos, length, req.Reason, req.ReasonHidden, moderator) {
 		replyError(w, http.StatusInternalServerError, APIErrorBanFailed)
 		return
 	}

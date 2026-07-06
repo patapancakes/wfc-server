@@ -79,8 +79,8 @@ CREATE TABLE IF NOT EXISTS `sake_records` (
 
 -- Dumping data for table wfc.sake_records: ~0 rows (approximately)
 
--- Dumping structure for table wfc.users
-CREATE TABLE IF NOT EXISTS `users` (
+-- Dumping structure for table wfc.profiles
+CREATE TABLE IF NOT EXISTS `profiles` (
   `profile_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) unsigned NOT NULL,
   `gsbrcd` tinytext NOT NULL,
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`profile_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1000000000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table wfc.users: ~0 rows (approximately)
+-- Dumping data for table wfc.profiles: ~0 rows (approximately)
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

@@ -210,7 +210,7 @@ func (g *GameSpySession) bestieMessage(command common.GameSpyCommand) {
 			break
 		}
 
-		qr2.ProcessGPTellAddr(g.User.ProfileId, g.QR2IP, toSession.User.ProfileId, toSession.QR2IP)
+		qr2.ProcessGPTellAddr(g.Profile.ProfileId, g.QR2IP, toSession.Profile.ProfileId, toSession.QR2IP)
 	}
 
 	if !ok {
@@ -261,9 +261,9 @@ func (g *GameSpySession) bestieMessage(command common.GameSpyCommand) {
 
 	// Check if this session is on the destination's RecvStatusFromList
 	for _, friend := range toSession.RecvStatusFromList {
-		if friend == g.User.ProfileId {
+		if friend == g.Profile.ProfileId {
 			// The destination has already received a status message from the sender, so we can just send the message
-			sendMessageToSession("1", g.User.ProfileId, toSession, newMsgStr)
+			sendMessageToSession("1", g.Profile.ProfileId, toSession, newMsgStr)
 			return
 		}
 	}
@@ -273,7 +273,7 @@ func (g *GameSpySession) bestieMessage(command common.GameSpyCommand) {
 		Command:      "bm",
 		CommandValue: "100",
 		OtherValues: map[string]string{
-			"f":   strconv.FormatUint(uint64(g.User.ProfileId), 10),
+			"f":   strconv.FormatUint(uint64(g.Profile.ProfileId), 10),
 			"msg": "|s|0|ss||ls||ip|0|p|0|qm|0",
 		},
 	})
@@ -282,7 +282,7 @@ func (g *GameSpySession) bestieMessage(command common.GameSpyCommand) {
 		Command:      "bm",
 		CommandValue: "1",
 		OtherValues: map[string]string{
-			"f":   strconv.FormatUint(uint64(g.User.ProfileId), 10),
+			"f":   strconv.FormatUint(uint64(g.Profile.ProfileId), 10),
 			"msg": newMsgStr,
 		},
 	})
@@ -292,7 +292,7 @@ func (g *GameSpySession) bestieMessage(command common.GameSpyCommand) {
 	}
 
 	// Append sender's profile ID to dest's RecvStatusFromList
-	toSession.RecvStatusFromList = append(toSession.RecvStatusFromList, g.User.ProfileId)
+	toSession.RecvStatusFromList = append(toSession.RecvStatusFromList, g.Profile.ProfileId)
 
 }
 
@@ -311,26 +311,26 @@ func (g *GameSpySession) mungeMatchReservation(toSession *GameSpySession, msgMat
 		msgMatchData.Reservation.LocalPort = 0
 	}
 
-	if !g.User.Restricted && !toSession.User.Restricted {
+	if !g.Profile.Restricted && !toSession.Profile.Restricted {
 		return true
 	}
 
 	// Check with QR2 if the room is public or private
-	resvError := qr2.CheckGPReservationAllowed(g.QR2IP, g.User.ProfileId, uint32(toProfileId), msgMatchData.Reservation.MatchType)
+	resvError := qr2.CheckGPReservationAllowed(g.QR2IP, g.Profile.ProfileId, uint32(toProfileId), msgMatchData.Reservation.MatchType)
 	if resvError == "ok" {
 		return true
 	}
 
 	// Figure out which error to return
 	if resvError == "restricted" || resvError == "restricted_join" {
-		logging.Error(g.ModuleName, "RESERVATION: Restricted user tried to connect to public room")
+		logging.Error(g.ModuleName, "RESERVATION: Restricted profile tried to connect to public room")
 
 		// Kick the player(s)
-		if g.User.Restricted {
-			kickPlayer(toSession.User.ProfileId, resvError)
+		if g.Profile.Restricted {
+			kickPlayer(toSession.Profile.ProfileId, resvError)
 		}
-		if toSession.User.Restricted {
-			kickPlayer(g.User.ProfileId, resvError)
+		if toSession.Profile.Restricted {
+			kickPlayer(g.Profile.ProfileId, resvError)
 		}
 	}
 
@@ -340,7 +340,7 @@ func (g *GameSpySession) mungeMatchReservation(toSession *GameSpySession, msgMat
 }
 
 func (g *GameSpySession) mungeMatchReservationResult(cmd byte, toSession *GameSpySession, msgMatchData *common.MatchCommandData, toProfileId uint32, sameAddress bool) bool {
-	if toSession.ReservationPID != g.User.ProfileId || toSession.Reservation.Reservation == nil {
+	if toSession.ReservationPID != g.Profile.ProfileId || toSession.Reservation.Reservation == nil {
 		logging.Error(g.ModuleName, "Destination", aurora.Cyan(toProfileId), "has no reservation with the sender")
 		// Allow the message through anyway to avoid a room deadlock
 	}
@@ -352,7 +352,7 @@ func (g *GameSpySession) mungeMatchReservationResult(cmd byte, toSession *GameSp
 	}
 
 	if cmd != common.MatchResvOK {
-		if toSession.ReservationPID == g.User.ProfileId {
+		if toSession.ReservationPID == g.Profile.ProfileId {
 			toSession.ReservationPID = 0
 		}
 		return true
@@ -364,7 +364,7 @@ func (g *GameSpySession) mungeMatchReservationResult(cmd byte, toSession *GameSp
 		return false
 	}
 
-	if !qr2.ProcessGPResvOK(msgMatchData.Version, *toSession.Reservation.Reservation, *msgMatchData.ResvOK, g.QR2IP, g.User.ProfileId, toSession.QR2IP, uint32(toProfileId)) {
+	if !qr2.ProcessGPResvOK(msgMatchData.Version, *toSession.Reservation.Reservation, *msgMatchData.ResvOK, g.QR2IP, g.Profile.ProfileId, toSession.QR2IP, uint32(toProfileId)) {
 		g.replyError(ErrMessage)
 		return false
 	}

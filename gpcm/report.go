@@ -28,7 +28,7 @@ func (g *GameSpySession) handleWWFCReport(command common.GameSpyCommand) {
 
 			logging.Warn(g.ModuleName, "Report bad packet from", aurora.BrightCyan(strconv.FormatUint(profileId, 10)))
 			logging.Event("reported_bad_packet", map[string]any{
-				"profile_id": g.User.ProfileId,
+				"profile_id": g.Profile.ProfileId,
 				"sender_id":  profileId,
 			})
 
@@ -41,7 +41,7 @@ func (g *GameSpySession) handleWWFCReport(command common.GameSpyCommand) {
 
 			logging.Warn(g.ModuleName, "Room stall caused by", aurora.BrightCyan(strconv.FormatUint(profileId, 10)))
 			logging.Event("reported_stall", map[string]any{
-				"profile_id":  g.User.ProfileId,
+				"profile_id":  g.Profile.ProfileId,
 				"stalling_id": profileId,
 			})
 
@@ -62,7 +62,7 @@ func (g *GameSpySession) handleWWFCReport(command common.GameSpyCommand) {
 				continue
 			}
 
-			qr2.ProcessUSER(g.User.ProfileId, g.QR2IP, packet)
+			qr2.ProcessUSER(g.Profile.ProfileId, g.QR2IP, packet)
 
 		case "wl:mkw_select_course", "wl:mkw_select_cc":
 			if g.GameName != "mariokartwii" {
@@ -70,7 +70,7 @@ func (g *GameSpySession) handleWWFCReport(command common.GameSpyCommand) {
 				continue
 			}
 
-			qr2.ProcessMKWSelectRecord(g.User.ProfileId, key, value)
+			qr2.ProcessMKWSelectRecord(g.Profile.ProfileId, key, value)
 		}
 	}
 }

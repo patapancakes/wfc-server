@@ -51,7 +51,7 @@ func HandleBanInfo(w http.ResponseWriter, r *http.Request) {
 		profileId = uint32(pId)
 	}
 
-	tos, issued, expires, reason, bannedProfileId, gsbrCode, inGameName, err := db.SearchUserBan(profileId, ngDeviceId, "", "")
+	tos, issued, expires, reason, bannedProfileId, gsbrCode, inGameName, err := db.SearchProfileBan(profileId, ngDeviceId, "", "")
 	if err != nil {
 		replyError(w, http.StatusOK, APIErrorBanNotFound)
 		return

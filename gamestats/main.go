@@ -27,7 +27,7 @@ type GameStatsSession struct {
 
 	Authenticated bool
 	LoginID       int
-	User          database.User
+	Profile       database.Profile
 
 	ReadBuffer  []byte
 	WriteBuffer []byte
@@ -109,7 +109,7 @@ func NewConnection(index uint64, address string) {
 
 		Authenticated: false,
 		LoginID:       0,
-		User:          database.User{},
+		Profile:       database.Profile{},
 
 		ReadBuffer:  []byte{},
 		WriteBuffer: []byte{},

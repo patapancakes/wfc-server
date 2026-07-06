@@ -23,7 +23,7 @@ func HandleUnban(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !db.UnbanUser(req.ProfileID) {
+	if !db.UnbanProfile(req.ProfileID) {
 		replyError(w, http.StatusInternalServerError, APIErrorUnbanFailed)
 		return
 	}

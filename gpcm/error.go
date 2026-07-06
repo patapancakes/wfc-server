@@ -486,7 +486,7 @@ func (g *GameSpySession) replyError(gpErr GPError) {
 			common.ShouldNotError(common.CloseConnection(ServerName, g.ConnIndex))
 		}
 		logging.Event("gpcm_returned_error", map[string]any{
-			"profile_id":   g.User.ProfileId,
+			"profile_id":   g.Profile.ProfileId,
 			"error_code":   gpErr.ErrorCode,
 			"error_string": gpErr.ErrorString,
 			"fatal":        gpErr.Fatal,
@@ -494,9 +494,9 @@ func (g *GameSpySession) replyError(gpErr GPError) {
 		return
 	}
 
-	deviceId := g.User.RestrictedDeviceId
+	deviceId := g.Profile.RestrictedDeviceId
 	if deviceId == 0 {
-		deviceId = g.User.NgDeviceId
+		deviceId = g.Profile.NgDeviceId
 	}
 
 	msg, wwfcErrorCode := gpErr.GetMessageTranslate(g.GameName, g.Region, g.Language, g.ConsoleFriendCode, deviceId)
@@ -510,7 +510,7 @@ func (g *GameSpySession) replyError(gpErr GPError) {
 	}
 
 	logging.Event("gpcm_returned_error", map[string]any{
-		"profile_id":         g.User.ProfileId,
+		"profile_id":         g.Profile.ProfileId,
 		"error_code":         gpErr.ErrorCode,
 		"error_string":       gpErr.ErrorString,
 		"fatal":              gpErr.Fatal,

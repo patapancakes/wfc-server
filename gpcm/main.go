@@ -18,7 +18,7 @@ const ServerName = "gpcm"
 type GameSpySession struct {
 	ConnIndex           uint64
 	RemoteAddr          string
-	User                database.User
+	Profile             database.Profile
 	ModuleName          string
 	LoggedIn            bool
 	DeviceAuthenticated bool
@@ -125,14 +125,14 @@ func CloseConnection(index uint64) {
 	logging.Notice(session.ModuleName, "Connection closed")
 
 	if session.LoggedIn {
-		qr2.Logout(session.User.ProfileId)
+		qr2.Logout(session.Profile.ProfileId)
 		if session.QR2IP != 0 {
-			qr2.ProcessGPStatusUpdate(session.User.ProfileId, session.QR2IP, "0")
+			qr2.ProcessGPStatusUpdate(session.Profile.ProfileId, session.QR2IP, "0")
 		}
 		session.sendLogoutStatus()
 
 		logging.Event("logged_out", map[string]any{
-			"profile_id": session.User.ProfileId,
+			"profile_id": session.Profile.ProfileId,
 		})
 	}
 
@@ -141,7 +141,7 @@ func CloseConnection(index uint64) {
 
 	if session.LoggedIn {
 		session.LoggedIn = false
-		delete(sessions, session.User.ProfileId)
+		delete(sessions, session.Profile.ProfileId)
 	}
 }
 
@@ -149,7 +149,7 @@ func NewConnection(index uint64, address string) {
 	session := &GameSpySession{
 		ConnIndex:      index,
 		RemoteAddr:     address,
-		User:           database.User{},
+		Profile:        database.Profile{},
 		ModuleName:     "GPCM:" + address,
 		LoggedIn:       false,
 		Challenge:      common.RandomString(10),

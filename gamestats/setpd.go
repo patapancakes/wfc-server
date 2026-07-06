@@ -33,7 +33,7 @@ func (g *GameStatsSession) setpd(command common.GameSpyCommand) {
 		},
 	}
 
-	if command.OtherValues["pid"] != strconv.FormatUint(uint64(g.User.ProfileId), 10) {
+	if command.OtherValues["pid"] != strconv.FormatUint(uint64(g.Profile.ProfileId), 10) {
 		logging.Error(g.ModuleName, "Invalid profile ID:", aurora.Cyan(command.OtherValues["pid"]))
 		g.Write(errMsg)
 		return
@@ -63,7 +63,7 @@ func (g *GameStatsSession) setpd(command common.GameSpyCommand) {
 		return
 	}
 
-	logging.Info(g.ModuleName, "Set public data: PID:", aurora.Cyan(g.User.ProfileId), "Index:", aurora.Cyan(dindex), "Type:", aurora.Cyan(ptype), "Data:", aurora.Cyan(newData))
+	logging.Info(g.ModuleName, "Set public data: PID:", aurora.Cyan(g.Profile.ProfileId), "Index:", aurora.Cyan(dindex), "Type:", aurora.Cyan(ptype), "Data:", aurora.Cyan(newData))
 
 	// Trim extra null byte at the end
 	if len(newData) > 0 && newData[len(newData)-1] == 0 {
@@ -77,7 +77,7 @@ func (g *GameStatsSession) setpd(command common.GameSpyCommand) {
 	}
 
 	var modifiedTime time.Time
-	_, _, err := db.GetGameStatsPublicData(g.User.ProfileId, dindex, ptype)
+	_, _, err := db.GetGameStatsPublicData(g.Profile.ProfileId, dindex, ptype)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			logging.Error(g.ModuleName, "GetGameStatsPublicData returned", err)
@@ -85,14 +85,14 @@ func (g *GameStatsSession) setpd(command common.GameSpyCommand) {
 			return
 		}
 
-		modifiedTime, err = db.CreateGameStatsPublicData(g.User.ProfileId, dindex, ptype, newData)
+		modifiedTime, err = db.CreateGameStatsPublicData(g.Profile.ProfileId, dindex, ptype, newData)
 		if err != nil {
 			logging.Error(g.ModuleName, "GetGameStatsPublicData returned", err)
 			g.Write(errMsg)
 			return
 		}
 	} else {
-		modifiedTime, err = db.UpdateGameStatsPublicData(g.User.ProfileId, dindex, ptype, newData)
+		modifiedTime, err = db.UpdateGameStatsPublicData(g.Profile.ProfileId, dindex, ptype, newData)
 		if err != nil {
 			logging.Error(g.ModuleName, "UpdateGameStatsPublicData returned", err)
 			g.Write(errMsg)

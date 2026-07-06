@@ -317,12 +317,12 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 		return
 	}
 
-	if g.User.Created {
+	if g.Profile.Created {
 		logging.Event(
 			"profile_created",
 			map[string]any{
-				"user_id":    g.User.UserId,
-				"profile_id": g.User.ProfileId,
+				"user_id":    g.Profile.UserId,
+				"profile_id": g.Profile.ProfileId,
 				"game_name":  g.GameName,
 				"ip_address": g.RemoteAddr,
 			},
@@ -330,12 +330,12 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 
 	}
 
-	g.ModuleName = "GPCM:" + strconv.FormatInt(int64(g.User.ProfileId), 10) + "*"
-	g.ModuleName += "/" + common.CalcFriendCodeString(g.User.ProfileId, g.User.GsbrCode[:4]) + "*"
+	g.ModuleName = "GPCM:" + strconv.FormatInt(int64(g.Profile.ProfileId), 10) + "*"
+	g.ModuleName += "/" + common.CalcFriendCodeString(g.Profile.ProfileId, g.Profile.GsbrCode[:4]) + "*"
 
 	// Check to see if a session is already open with this profile ID
 	mutex.Lock()
-	otherSession, exists := sessions[g.User.ProfileId]
+	otherSession, exists := sessions[g.Profile.ProfileId]
 	if exists {
 		otherSession.replyError(ErrForcedDisconnect)
 
@@ -344,7 +344,7 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 			time.Sleep(300 * time.Millisecond)
 			mutex.Lock()
 
-			if _, exists = sessions[g.User.ProfileId]; !exists {
+			if _, exists = sessions[g.Profile.ProfileId]; !exists {
 				break
 			}
 
@@ -357,23 +357,23 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 			}
 		}
 	}
-	sessions[g.User.ProfileId] = g
+	sessions[g.Profile.ProfileId] = g
 	mutex.Unlock()
 
 	g.AuthToken = authToken
-	g.LoginTicket = common.GPCMLoginTicket{ProfileID: g.User.ProfileId}.Marshal()
+	g.LoginTicket = common.GPCMLoginTicket{ProfileID: g.Profile.ProfileId}.Marshal()
 	g.SessionKey = rand.Int31n(290000000) + 10000000
 
 	g.DeviceAuthenticated = deviceAuth
 	g.LoggedIn = true
 
-	g.ModuleName = "GPCM:" + strconv.FormatInt(int64(g.User.ProfileId), 10)
-	g.ModuleName += "/" + common.CalcFriendCodeString(g.User.ProfileId, g.User.GsbrCode[:4])
+	g.ModuleName = "GPCM:" + strconv.FormatInt(int64(g.Profile.ProfileId), 10)
+	g.ModuleName += "/" + common.CalcFriendCodeString(g.Profile.ProfileId, g.Profile.GsbrCode[:4])
 
 	// Notify QR2 of the login
-	qr2.Login(g.User.ProfileId, g.GameCode, g.InGameName, g.ConsoleFriendCode, g.User.GsbrCode[:4], g.RemoteAddr, g.NeedsExploit, g.DeviceAuthenticated, g.User.Restricted)
+	qr2.Login(g.Profile.ProfileId, g.GameCode, g.InGameName, g.ConsoleFriendCode, g.Profile.GsbrCode[:4], g.RemoteAddr, g.NeedsExploit, g.DeviceAuthenticated, g.Profile.Restricted)
 
-	replyUserId := g.User.UserId
+	replyUserId := g.Profile.UserId
 	if g.UnitCode == UnitCodeDS {
 		// Workaround for SDK bug
 		replyUserId = 0
@@ -383,8 +383,8 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 		"sesskey":    strconv.FormatInt(int64(g.SessionKey), 10),
 		"proof":      proof,
 		"userid":     strconv.FormatUint(replyUserId, 10),
-		"profileid":  strconv.FormatUint(uint64(g.User.ProfileId), 10),
-		"uniquenick": g.User.UniqueNick,
+		"profileid":  strconv.FormatUint(uint64(g.Profile.ProfileId), 10),
+		"uniquenick": g.Profile.UniqueNick,
 		"lt":         g.LoginTicket,
 		"id":         command.OtherValues["id"],
 	}
@@ -413,7 +413,7 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 	logging.Event(
 		"logged_in",
 		map[string]any{
-			"profile_id":   g.User.ProfileId,
+			"profile_id":   g.Profile.ProfileId,
 			"game_name":    g.GameName,
 			"in_game_name": g.InGameName,
 			"ip_address":   g.RemoteAddr,
@@ -432,12 +432,12 @@ func (g *GameSpySession) exLogin(command common.GameSpyCommand) {
 		return
 	}
 
-	if !g.performLoginWithDatabase(g.User.UserId, g.User.GsbrCode, 0, defaultKey, deviceId, true) {
+	if !g.performLoginWithDatabase(g.Profile.UserId, g.Profile.GsbrCode, 0, defaultKey, deviceId, true) {
 		return
 	}
 
 	g.DeviceAuthenticated = true
-	qr2.SetDeviceAuthenticated(g.User.ProfileId)
+	qr2.SetDeviceAuthenticated(g.Profile.ProfileId)
 }
 
 func checkPayloadVersion(payloadVer string) bool {
@@ -499,7 +499,7 @@ func (g *GameSpySession) verifyExLoginInfo(command common.GameSpyCommand, authTo
 	logging.Event(
 		"device_authenticated",
 		map[string]any{
-			"profile_id":      g.User.ProfileId,
+			"profile_id":      g.Profile.ProfileId,
 			"ng_device_id":    g.DeviceId,
 			"payload_version": payloadVer,
 		},
@@ -514,8 +514,8 @@ func (g *GameSpySession) performLoginWithDatabase(userId uint64, gsbrCode string
 		ipAddress = ipAddress[:strings.Index(ipAddress, ":")]
 	}
 
-	user, err := db.LoginUserToGPCM(userId, gsbrCode, profileId, defaultKey, deviceId, ipAddress, g.InGameName, deviceAuth)
-	g.User = user
+	profile, err := db.LoginUserToGPCM(userId, gsbrCode, profileId, defaultKey, deviceId, ipAddress, g.InGameName, deviceAuth)
+	g.Profile = profile
 
 	if err != nil {
 		logging.Error(g.ModuleName, "DB error:", err)
@@ -570,10 +570,10 @@ func (g *GameSpySession) performLoginWithDatabase(userId uint64, gsbrCode string
 		case database.ErrProfileBannedTOS:
 			g.replyError(GPError{
 				ErrorCode:   ErrLogin.ErrorCode,
-				ErrorString: "The profile is banned from the service. Reason: " + user.BanReason,
+				ErrorString: "The profile is banned from the service. Reason: " + profile.BanReason,
 				Fatal:       true,
 				WWFCMessage: WWFCMsgProfileBannedTOS,
-				Reason:      user.BanReason,
+				Reason:      profile.BanReason,
 			})
 		default:
 			g.replyError(GPError{
