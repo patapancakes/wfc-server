@@ -8,6 +8,7 @@ import (
 	"time"
 	"wwfc/api"
 	"wwfc/common"
+	"wwfc/database"
 	"wwfc/gamestats"
 	"wwfc/logging"
 	"wwfc/race"
@@ -17,6 +18,8 @@ import (
 )
 
 var (
+	db database.Connection
+
 	serverName           string
 	server, tlsServer    *http.Server
 	payloadServerAddress string
@@ -44,6 +47,9 @@ func StartServer(reload bool) {
 	serverName = config.ServerName
 	address := *config.NASAddress + ":" + config.NASPort
 	payloadServerAddress = config.PayloadServerAddress
+
+	// Start SQL
+	db = database.Start(config)
 
 	if config.EnableHTTPS {
 		go setupTLS(config)

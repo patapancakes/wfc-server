@@ -46,12 +46,73 @@ func handleAuthAccountEndpoint(w http.ResponseWriter, r *http.Request) {
 }
 
 func acctcreate(moduleName string, fields map[string][]byte) map[string]string {
-	return map[string]string{
+	param := map[string]string{
 		"retry":    "0",
 		"datetime": getDateTime(),
 		"returncd": "002",
-		"userid":   strconv.FormatUint(database.GetUniqueUserID(), 10),
 	}
+
+	var user database.User
+
+	var err error
+	user.UnitCode, err = strconv.Atoi(string(fields["unitcd"]))
+	if err != nil || (user.UnitCode != 0 && user.UnitCode != 1) {
+		logging.Error(moduleName, "Invalid unitcd string in form")
+		param["returncd"] = "103"
+		return param
+	}
+
+	user.ID, err = strconv.ParseUint(string(fields["userid"]), 10, 64)
+	if err != nil {
+		logging.Error(moduleName, "Invalid userid string in form")
+		param["returncd"] = "103"
+		return param
+	}
+
+	macadr, ok := fields["macadr"]
+	if !ok || len(macadr) != 12 {
+		logging.Error(moduleName, "Invalid macadr string in form")
+		param["returncd"] = "103"
+		return param
+	}
+
+	user.MacAddress = string(macadr)
+
+	if !user.IsWii() {
+		user.Password, err = strconv.Atoi(string(fields["passwd"]))
+		if err != nil || user.Password > 999 {
+			logging.Error(moduleName, "Invalid passwd string in form")
+			param["returncd"] = "103"
+			return param
+		}
+	} else {
+		csnum, ok := fields["csnum"]
+		if !ok || len(csnum) != 11 {
+			logging.Error(moduleName, "Invalid csnum string in form")
+			param["returncd"] = "103"
+			return param
+		}
+
+		user.SerialNumber = string(csnum)
+	}
+
+	err = db.CreateUser(&user)
+	if err != nil {
+		logging.Error(moduleName, "Error creating user:", aurora.Cyan(user.ID), "\nerror:", err.Error())
+		switch err {
+		case database.ErrUserIDInUse:
+			param["returncd"] = "104"
+		case database.ErrMACInUse, database.ErrSerialNumberInUse:
+			param["returncd"] = "106"
+		default:
+			param["returncd"] = "103"
+		}
+		return param
+	}
+
+	logging.Notice(moduleName, "Created new NAS user:", aurora.Cyan(user.ID), aurora.Cyan(user.MacAddress))
+
+	return param
 }
 
 func login(moduleName string, fields map[string][]byte) map[string]string {
@@ -61,27 +122,40 @@ func login(moduleName string, fields map[string][]byte) map[string]string {
 		"locator":  "gamespy.com",
 	}
 
-	token := common.NASAuthToken{}
+	var token common.NASAuthToken
 
 	gamecd, ok := fields["gamecd"]
-	if !ok {
-		logging.Error(moduleName, "No gamecd in form")
+	if !ok || len(gamecd) != 4 {
+		logging.Error(moduleName, "Invalid gamecd in form")
 		param["returncd"] = "103"
 		return param
 	}
 	copy(token.GameCode[:], gamecd)
 
-	strUserId, ok := fields["userid"]
-	if !ok {
-		logging.Error(moduleName, "No userid in form")
+	var err error
+	token.UserID, err = strconv.ParseUint(string(fields["userid"]), 10, 64)
+	if err != nil || token.UserID >= 0x80000000000 {
+		logging.Error(moduleName, "Invalid userid string in form")
 		param["returncd"] = "103"
 		return param
 	}
 
-	var err error
-	token.UserID, err = strconv.ParseUint(string(strUserId), 10, 64)
-	if err != nil || token.UserID >= 0x80000000000 {
-		logging.Error(moduleName, "Invalid userid string in form")
+	user, ok := db.GetUser(token.UserID)
+	if !ok {
+		logging.Error(moduleName, "Unknown userid")
+		param["returncd"] = "105"
+		return param
+	}
+
+	macadr, ok := fields["macadr"]
+	if !ok || len(macadr) != 12 {
+		logging.Error(moduleName, "Invalid macadr string in form")
+		param["returncd"] = "103"
+		return param
+	}
+
+	if user.MacAddress != string(macadr) {
+		logging.Error(moduleName, "macadr does not match")
 		param["returncd"] = "103"
 		return param
 	}
@@ -101,12 +175,6 @@ func login(moduleName string, fields map[string][]byte) map[string]string {
 
 	// Some games like Fortune Street make login requests without a gsbr code, so we temporarily fake one
 	if len(gsbrcd) == 0 {
-		if len(gamecd) < 4 {
-			logging.Error(moduleName, "Invalid gamecd string in form")
-			param["returncd"] = "103"
-			return param
-		}
-
 		gsbrcd = append(gamecd[:3], 'J')
 	}
 
@@ -125,21 +193,23 @@ func login(moduleName string, fields map[string][]byte) map[string]string {
 	}
 	token.Lang = langByte[0]
 
-	unitcd, ok := fields["unitcd"]
-	if !ok {
-		logging.Error(moduleName, "No unitcd in form")
+	unitcd, err := strconv.Atoi(string(fields["unitcd"]))
+	if err != nil || (unitcd != 0 && unitcd != 1) {
+		logging.Error(moduleName, "Invalid unitcd string in form")
 		param["returncd"] = "103"
 		return param
 	}
 
-	isWii := len(unitcd) > 1 || unitcd[0] != '0'
-	var endianness binary.ByteOrder
-	switch isWii {
-	case false:
-		token.UnitCode = 0
-		endianness = binary.LittleEndian
-	case true:
-		token.UnitCode = 1
+	if user.UnitCode != unitcd {
+		logging.Error(moduleName, "unitcd does not match")
+		param["returncd"] = "103"
+		return param
+	}
+
+	token.UnitCode = byte(user.UnitCode)
+
+	var endianness binary.ByteOrder = binary.LittleEndian
+	if user.IsWii() {
 		endianness = binary.BigEndian
 	}
 
@@ -154,8 +224,27 @@ func login(moduleName string, fields map[string][]byte) map[string]string {
 		}
 	}
 
-	switch isWii {
-	case false:
+	if !user.IsWii() {
+		passwdStr, ok := fields["passwd"]
+		if !ok || len(passwdStr) != 3 {
+			logging.Error(moduleName, "Invalid passwd string in form")
+			param["returncd"] = "103"
+			return param
+		}
+
+		passwd, err := strconv.Atoi(string(passwdStr))
+		if err != nil {
+			logging.Error(moduleName, "Invalid passwd string in form")
+			param["returncd"] = "103"
+			return param
+		}
+
+		if user.Password != passwd {
+			logging.Error(moduleName, "passwd does not match")
+			param["returncd"] = "105"
+			return param
+		}
+
 		devname, ok := fields["devname"]
 		if !ok {
 			logging.Error(moduleName, "No devname in form")
@@ -168,16 +257,21 @@ func login(moduleName string, fields map[string][]byte) map[string]string {
 			ingamesn = devname
 		}
 		logging.Notice(moduleName, "Login (DS)", aurora.Cyan(token.UserID), aurora.Cyan(string(gsbrcd)), "devname:", aurora.Cyan(common.UTF16Decode(devname, endianness)), "name:", aurora.Cyan(ingamesnStr))
-
-	case true:
-		cfc, ok := fields["cfc"]
-		if !ok {
-			logging.Error(moduleName, "No cfc in form")
+	} else {
+		csnum, ok := fields["csnum"]
+		if !ok || len(csnum) != 11 {
+			logging.Error(moduleName, "Invalid csnum string in form")
 			param["returncd"] = "103"
 			return param
 		}
 
-		token.ConsoleFriendCode, err = strconv.ParseUint(string(cfc), 10, 64)
+		if user.SerialNumber != string(csnum) {
+			logging.Error(moduleName, "csnum does not match")
+			param["returncd"] = "105"
+			return param
+		}
+
+		token.ConsoleFriendCode, err = strconv.ParseUint(string(fields["cfc"]), 10, 64)
 		if err != nil || token.ConsoleFriendCode > 9999999999999999 {
 			logging.Error(moduleName, "Invalid cfc string in form")
 			param["returncd"] = "103"
@@ -204,10 +298,9 @@ func login(moduleName string, fields map[string][]byte) map[string]string {
 	copy(token.Challenge[:], []byte(challenge))
 	copy(token.InGameScreenName[:], ingamesn)
 
+	param["returncd"] = "001"
 	if hasProfaneName {
 		param["returncd"] = "040"
-	} else {
-		param["returncd"] = "001"
 	}
 
 	param["challenge"] = challenge

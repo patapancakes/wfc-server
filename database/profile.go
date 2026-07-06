@@ -2,7 +2,6 @@ package database
 
 import (
 	"errors"
-	"math/rand"
 	"time"
 )
 
@@ -92,11 +91,6 @@ func (c *Connection) UpdateProfileID(profile *Profile, newProfileId uint32) erro
 	}
 
 	return err
-}
-
-func GetUniqueUserID() uint64 {
-	// Not guaranteed unique but doesn't matter in practice if multiple people have the same user ID.
-	return uint64(rand.Int63n(0x80000000000))
 }
 
 func (c *Connection) UpdateProfile(profile *Profile, data map[string]string) {
