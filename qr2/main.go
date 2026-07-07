@@ -25,9 +25,6 @@ const (
 	KeepAliveRequest        = 0x08
 	AvailableRequest        = 0x09
 	ClientRegisteredReply   = 0x0A
-
-	// Added by WiiLink
-	ClientExploitReply = 0x10
 )
 
 var (
@@ -206,13 +203,6 @@ func handleConnection(conn net.PacketConn, addr net.UDPAddr, buffer []byte) {
 	case ClientMessageAckRequest:
 		// logging.Info(moduleName, "Command:", aurora.Yellow("CLIENT_MESSAGE_ACK"))
 
-		// In case ClientExploitReply is lost, this can be checked as well
-		// This would be sent either after the payload is downloaded, or the client is already patched
-		session.ExploitReceived = true
-		if login := session.login; login != nil {
-			login.NeedsExploit = false
-		}
-
 		session.messageAckWaker.Assert()
 		return
 
@@ -230,14 +220,6 @@ func handleConnection(conn net.PacketConn, addr net.UDPAddr, buffer []byte) {
 
 	case ClientRegisteredReply:
 		logging.Info(moduleName, "Command:", aurora.Yellow("CLIENT_REGISTERED"))
-
-	case ClientExploitReply:
-		logging.Info(moduleName, "Command:", aurora.Yellow("CLIENT_EXPLOIT_ACK"))
-
-		session.ExploitReceived = true
-		if login := session.login; login != nil {
-			login.NeedsExploit = false
-		}
 
 	default:
 		logging.Error(moduleName, "Unknown command:", aurora.Yellow(buffer[0]))

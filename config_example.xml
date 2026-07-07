@@ -14,12 +14,6 @@
      <nasPortHttps>443</nasPortHttps>
      <enableHttps>false</enableHttps>
 
-     <!--
-          The address the payload server will be located at,
-          leave blank to use the deprecated integrated server
-      -->
-     <payloadServerAddress>127.0.0.1:29997</payloadServerAddress>
-
      <!-- 
           The address the frontend RPC server will bind to.
           This is a local channel for internal server communication,

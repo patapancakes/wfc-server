@@ -244,16 +244,6 @@ func ProcessGPStatusUpdate(profileID uint32, senderIP uint64, status string) {
 		}
 	}
 
-	// Send the client message exploit if not received yet
-	if status != "0" && status != "1" && !session.ExploitReceived && session.login != nil && session.login.NeedsExploit {
-		sessionCopy := *session
-
-		mutex.Unlock()
-		logging.Notice(moduleName, "Sending SBCM exploit to DNS patcher client")
-		sendClientExploit(moduleName, sessionCopy)
-		mutex.Lock()
-	}
-
 	if status == "0" || status == "1" || status == "3" || status == "4" {
 		session := sessions[senderIP]
 		if session == nil || session.groupPointer == nil {

@@ -20,9 +20,8 @@ import (
 var (
 	db database.Connection
 
-	serverName           string
-	server, tlsServer    *http.Server
-	payloadServerAddress string
+	serverName        string
+	server, tlsServer *http.Server
 )
 
 var (
@@ -46,7 +45,6 @@ func StartServer(reload bool) {
 	config := common.GetConfig()
 	serverName = config.ServerName
 	address := *config.NASAddress + ":" + config.NASPort
-	payloadServerAddress = config.PayloadServerAddress
 
 	// Start SQL
 	db = database.Start(config)
@@ -71,18 +69,6 @@ func StartServer(reload bool) {
 	authMux.HandleFunc("/pr", handleAuthProfanityEndpoint)
 
 	dlsMux.HandleFunc("/download", handleDownloadEndpoint)
-
-	if payloadServerAddress != "" {
-		// Forward the request to the payload server
-		authMux.HandleFunc("/payload", forwardPayloadRequest)
-		authMux.HandleFunc("/payload/", forwardPayloadRequest)
-	} else {
-		authMux.HandleFunc("/payload", handlePayloadRequest)
-	}
-
-	for i := 0; i <= 9; i++ {
-		authMux.HandleFunc("/w"+strconv.Itoa(i), downloadStage1)
-	}
 
 	authMux.HandleFunc("/nastest.jsp", handleNASTest)
 

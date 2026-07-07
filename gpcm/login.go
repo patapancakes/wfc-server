@@ -24,18 +24,6 @@ const (
 	UnitCodeDSAndWii = 0xff
 )
 
-type MinimumPayloadVersion struct {
-	major byte
-	minor int
-}
-
-var MinimumPayloadVersions = []MinimumPayloadVersion{
-	{
-		major: 0,
-		minor: 1,
-	},
-}
-
 func generateResponse(gpcmChallenge, nasChallenge, authToken, clientChallenge string) string {
 	hasher := md5.New()
 	hasher.Write([]byte(nasChallenge))
@@ -215,8 +203,6 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 
 	g.InGameName = common.UTF16Decode(authTokenObj.InGameScreenName[:], endianness)
 
-	_, payloadVerExists := command.OtherValues["wl:ver"]
-	_, signatureExists := command.OtherValues["wl:sig"]
 	deviceId := uint32(0)
 
 	if hostPlatform, exists := command.OtherValues["wl:host"]; exists {
@@ -254,31 +240,14 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 	defaultKey := false
 	switch g.UnitCode {
 	case UnitCodeDS:
-		g.NeedsExploit = common.DoesGameNeedExploit(g.GameName)
 		deviceAuth = true
 
 	case UnitCodeWii:
-		if !payloadVerExists && !signatureExists {
-			// Players using the DNS, need patching using a QR2 exploit
-			if !common.DoesGameNeedExploit(g.GameName) {
-				logging.Error(g.ModuleName, "Using DNS for incompatible game:", aurora.Cyan(g.GameName))
-				g.replyError(GPError{
-					ErrorCode:   ErrLogin.ErrorCode,
-					ErrorString: "The client is not patched to use WiiLink WFC.",
-					Fatal:       true,
-				})
-				return
-			}
-
-			g.NeedsExploit = true
-			deviceAuth = false
-		} else {
-			defaultKey, deviceId = g.verifyExLoginInfo(command, authToken)
-			if deviceId == 0 {
-				return
-			}
-			deviceAuth = true
+		defaultKey, deviceId = g.verifyExLoginInfo(command, authToken)
+		if deviceId == 0 {
+			return
 		}
+		deviceAuth = true
 
 	default:
 		logging.Error(g.ModuleName, "Invalid unit code specified:", aurora.Cyan(g.UnitCode))
@@ -370,7 +339,7 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 	g.ModuleName += "/" + common.CalcFriendCodeString(g.Profile.ID, g.Profile.GsbrCode[:4])
 
 	// Notify QR2 of the login
-	qr2.Login(g.Profile.ID, g.GameCode, g.InGameName, g.ConsoleFriendCode, g.Profile.GsbrCode[:4], g.RemoteAddr, g.NeedsExploit, g.DeviceAuthenticated, g.Profile.Restricted)
+	qr2.Login(g.Profile.ID, g.GameCode, g.InGameName, g.ConsoleFriendCode, g.Profile.GsbrCode[:4], g.RemoteAddr, g.DeviceAuthenticated, g.Profile.Restricted)
 
 	replyUserId := g.Profile.UserID
 	if g.UnitCode == UnitCodeDS {
@@ -429,39 +398,10 @@ func (g *GameSpySession) exLogin(command common.GameSpyCommand) {
 	qr2.SetDeviceAuthenticated(g.Profile.ID)
 }
 
-func checkPayloadVersion(payloadVer string) bool {
-	verInt, err := strconv.ParseInt(payloadVer, 0, 32)
-	if err != nil {
-		return false
-	}
-
-	major := byte(verInt>>24) & 255
-	minor := int(verInt>>12) & 4095
-	// beta := verInt & 4095
-
-	for _, v := range MinimumPayloadVersions {
-		if v.major == major && minor >= v.minor {
-			return true
-		}
-	}
-	return false
-}
-
 func (g *GameSpySession) verifyExLoginInfo(command common.GameSpyCommand, authToken string) (defaultKey bool, deviceId uint32) {
-	payloadVer, payloadVerExists := command.OtherValues["wl:ver"]
 	signature, signatureExists := command.OtherValues["wl:sig"]
 	defaultKey = false
 	deviceId = 0
-
-	if !payloadVerExists || !checkPayloadVersion(payloadVer) {
-		g.replyError(GPError{
-			ErrorCode:   ErrLogin.ErrorCode,
-			ErrorString: "The payload version is invalid.",
-			Fatal:       true,
-			WWFCMessage: WWFCMsgPayloadInvalid,
-		})
-		return
-	}
 
 	if !signatureExists {
 		g.replyError(GPError{
@@ -488,9 +428,8 @@ func (g *GameSpySession) verifyExLoginInfo(command common.GameSpyCommand, authTo
 	logging.Event(
 		"device_authenticated",
 		map[string]any{
-			"profile_id":      g.Profile.ID,
-			"ng_device_id":    g.DeviceId,
-			"payload_version": payloadVer,
+			"profile_id":   g.Profile.ID,
+			"ng_device_id": g.DeviceId,
 		},
 	)
 	return

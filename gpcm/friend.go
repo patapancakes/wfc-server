@@ -295,7 +295,7 @@ func (g *GameSpySession) sendFriendStatus(profileId uint32) {
 
 	if session, ok := sessions[profileId]; ok && session.LoggedIn && session.isFriendAdded(g.Profile.ID) {
 		// Prevent players abusing a stack overflow exploit with the locstring in Mario Kart Wii
-		if session.NeedsExploit && strings.HasPrefix(session.GameCode, "RMC") && len(g.LocString) > 0x14 {
+		if strings.HasPrefix(session.GameCode, "RMC") && len(g.LocString) > 0x14 {
 			logging.Warn("GPCM", "Blocked message from", aurora.Cyan(g.Profile.ID), "to", aurora.Cyan(session.Profile.ID), "due to a stack overflow exploit")
 			return
 		}
@@ -308,7 +308,7 @@ func (g *GameSpySession) sendFriendStatus(profileId uint32) {
 func (g *GameSpySession) exchangeFriendStatus(profileId uint32) {
 	if session, ok := sessions[profileId]; ok && session.LoggedIn {
 		if session.isFriendAdded(g.Profile.ID) && session.isFriendAuthorized(g.Profile.ID) {
-			if session.NeedsExploit && strings.HasPrefix(session.GameCode, "RMC") && len(g.LocString) > 0x14 {
+			if strings.HasPrefix(session.GameCode, "RMC") && len(g.LocString) > 0x14 {
 				logging.Warn("GPCM", "Blocked message from", aurora.Cyan(g.Profile.ID), "to", aurora.Cyan(session.Profile.ID), "due to a stack overflow exploit")
 				return
 			}
@@ -318,7 +318,7 @@ func (g *GameSpySession) exchangeFriendStatus(profileId uint32) {
 		}
 
 		if g.isFriendAdded(profileId) && g.isFriendAuthorized(profileId) {
-			if g.NeedsExploit && strings.HasPrefix(g.GameCode, "RMC") && len(session.LocString) > 0x14 {
+			if strings.HasPrefix(g.GameCode, "RMC") && len(session.LocString) > 0x14 {
 				logging.Warn("GPCM", "Blocked message from", aurora.Cyan(session.Profile.ID), "to", aurora.Cyan(g.Profile.ID), "due to a stack overflow exploit")
 				return
 			}
