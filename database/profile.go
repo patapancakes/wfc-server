@@ -9,15 +9,15 @@ import (
 const (
 	InsertProfile              = `INSERT INTO profiles (user_id, gsbrcd, ng_device_id) VALUES (?, ?, ?) RETURNING id`
 	InsertProfileWithID        = `INSERT INTO profiles (id, user_id, gsbrcd, ng_device_id) VALUES (?, ?, ?, ?)`
-	UpdateProfileTable         = `UPDATE profiles SET firstname = CASE WHEN ? THEN ? ELSE firstname END, lastname = CASE WHEN ? THEN ? ELSE lastname END, open_host = CASE WHEN ? THEN ? ELSE open_host END WHERE id = ?`
+	UpdateProfileTable         = `UPDATE profiles SET firstname = CASE WHEN ? THEN ? ELSE firstname END, lastname = CASE WHEN ? THEN ? ELSE lastname END WHERE id = ?`
 	UpdateUserProfileID        = `UPDATE profiles SET id = ? WHERE user_id = ? AND gsbrcd = ?`
 	UpdateProfileNGDeviceID    = `UPDATE profiles SET ng_device_id = ? WHERE id = ?`
-	GetProfile                 = `SELECT user_id, gsbrcd, firstname, lastname, open_host, last_ip_address, last_ingamesn FROM profiles WHERE id = ?`
-	ClearProfileQuery          = `DELETE FROM profiles WHERE id = ? RETURNING user_id, gsbrcd, firstname, lastname, open_host, last_ip_address, last_ingamesn`
+	GetProfile                 = `SELECT user_id, gsbrcd, firstname, lastname, last_ip_address, last_ingamesn FROM profiles WHERE id = ?`
+	ClearProfileQuery          = `DELETE FROM profiles WHERE id = ? RETURNING user_id, gsbrcd, firstname, lastname, last_ip_address, last_ingamesn`
 	DoesProfileExist           = `SELECT EXISTS(SELECT 1 FROM profiles WHERE user_id = ? AND gsbrcd = ?)`
 	IsProfileIDInUse           = `SELECT EXISTS(SELECT 1 FROM profiles WHERE id = ?)`
 	DeleteProfileSession       = `DELETE FROM sessions WHERE id = ?`
-	GetUserProfileID           = `SELECT id, ng_device_id, firstname, lastname, open_host, last_ip_address FROM profiles WHERE user_id = ? AND gsbrcd = ?`
+	GetUserProfileID           = `SELECT id, ng_device_id, firstname, lastname, last_ip_address FROM profiles WHERE user_id = ? AND gsbrcd = ?`
 	UpdateProfileLastIPAddress = `UPDATE profiles SET last_ip_address = ?, last_ingamesn = ? WHERE id = ?`
 	UpdateProfileBan           = `UPDATE profiles SET has_ban = true, ban_issued = ?, ban_expires = ?, ban_reason = ?, ban_reason_hidden = ?, ban_moderator = ?, ban_tos = ? WHERE id = ?`
 	SearchProfileBan           = `SELECT has_ban, ban_tos, ng_device_id FROM profiles WHERE has_ban = true AND (id = ? OR ng_device_id = ? OR last_ip_address = ?) AND (ban_expires IS NULL OR ban_expires > ?) AND (ban_expires IS NULL OR ban_expires > ?) ORDER BY ban_tos DESC LIMIT 1`
@@ -35,7 +35,6 @@ type Profile struct {
 	Restricted         bool
 	RestrictedDeviceId uint32
 	BanReason          string
-	OpenHost           bool
 	LastInGameSn       string
 	LastIPAddress      string
 	Created            bool
@@ -103,10 +102,8 @@ func (c *Connection) UpdateProfileID(profile *Profile, newProfileId uint32) erro
 func (c *Connection) UpdateProfile(profile *Profile, data map[string]string) {
 	firstName, firstNameExists := data["firstname"]
 	lastName, lastNameExists := data["lastname"]
-	openHost, openHostExists := data["wl:oh"]
-	openHostBool := openHostExists && openHost != "0"
 
-	_, err := c.pool.ExecContext(c.ctx, UpdateProfileTable, firstNameExists, firstName, lastNameExists, lastName, openHostBool, openHost, profile.ID)
+	_, err := c.pool.ExecContext(c.ctx, UpdateProfileTable, firstNameExists, firstName, lastNameExists, lastName, profile.ID)
 	if err != nil {
 		panic(err)
 	}
@@ -118,16 +115,12 @@ func (c *Connection) UpdateProfile(profile *Profile, data map[string]string) {
 	if lastNameExists {
 		profile.LastName = lastName
 	}
-
-	if openHostExists {
-		profile.OpenHost = openHostBool
-	}
 }
 
 func (c *Connection) GetProfile(profileId uint32) (Profile, bool) {
 	profile := Profile{}
 	row := c.pool.QueryRowContext(c.ctx, GetProfile, profileId)
-	err := row.Scan(&profile.UserID, &profile.GsbrCode, &profile.FirstName, &profile.LastName, &profile.OpenHost, &profile.LastIPAddress, &profile.LastInGameSn)
+	err := row.Scan(&profile.UserID, &profile.GsbrCode, &profile.FirstName, &profile.LastName, &profile.LastIPAddress, &profile.LastInGameSn)
 	if err != nil {
 		return Profile{}, false
 	}
@@ -139,7 +132,7 @@ func (c *Connection) GetProfile(profileId uint32) (Profile, bool) {
 func (c *Connection) ClearProfile(profileId uint32) (Profile, bool) {
 	profile := Profile{}
 	row := c.pool.QueryRowContext(c.ctx, ClearProfileQuery, profileId)
-	err := row.Scan(&profile.UserID, &profile.GsbrCode, &profile.FirstName, &profile.LastName, &profile.OpenHost, &profile.LastIPAddress, &profile.LastInGameSn)
+	err := row.Scan(&profile.UserID, &profile.GsbrCode, &profile.FirstName, &profile.LastName, &profile.LastIPAddress, &profile.LastInGameSn)
 
 	if err != nil {
 		return Profile{}, false

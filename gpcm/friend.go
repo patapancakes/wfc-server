@@ -94,7 +94,7 @@ func (g *GameSpySession) addFriend(command common.GameSpyCommand) {
 	defer mutex.Unlock()
 
 	authorized := g.isFriendAuthorized(uint32(newProfileId))
-	if !g.Profile.OpenHost && authorized {
+	if authorized {
 		logging.Info(g.ModuleName, "Attempt to add a friend who is already authorized")
 		// This seems to always happen, do we need to return an error?
 		// DWC vocally ignores the error anyway, so let's not bother
@@ -120,7 +120,7 @@ func (g *GameSpySession) addFriend(command common.GameSpyCommand) {
 		return
 	}
 
-	if !newSession.Profile.OpenHost && !newSession.isFriendAdded(g.Profile.ID) {
+	if !newSession.isFriendAdded(g.Profile.ID) {
 		// Not an error, just ignore for now
 		logging.Info(g.ModuleName, "Destination has not added sender")
 		return
@@ -140,8 +140,7 @@ func (g *GameSpySession) addFriend(command common.GameSpyCommand) {
 		sendMessageToSessionBuffer("1", newSession.Profile.ID, g, bm1AuthMessage)
 	}
 
-	if newSession.isFriendAdded(g.Profile.ID) && !g.Profile.OpenHost {
-		// If we're open host then this would've been sent already
+	if newSession.isFriendAdded(g.Profile.ID) {
 		sendMessageToSession("4", g.Profile.ID, newSession, "")
 
 		if newSession.isBm1AuthMessageNeeded() {
@@ -175,15 +174,13 @@ func (g *GameSpySession) removeFriend(command common.GameSpyCommand) {
 		removeFromUint32Array(&g.FriendList, delProfileIDIndex)
 	}
 
-	if !g.Profile.OpenHost {
-		if g.isFriendAuthorized(delProfileID32) {
-			delProfileIDIndex := g.getAuthorizedFriendIndex(delProfileID32)
-			removeFromUint32Array(&g.AuthFriendList, delProfileIDIndex)
-		}
+	if g.isFriendAuthorized(delProfileID32) {
+		delProfileIDIndex := g.getAuthorizedFriendIndex(delProfileID32)
+		removeFromUint32Array(&g.AuthFriendList, delProfileIDIndex)
+	}
 
-		if session, ok := sessions[delProfileID32]; ok && session.LoggedIn && session.isFriendAuthorized(g.Profile.ID) {
-			sendMessageToSession("100", g.Profile.ID, session, logOutMessage)
-		}
+	if session, ok := sessions[delProfileID32]; ok && session.LoggedIn && session.isFriendAuthorized(g.Profile.ID) {
+		sendMessageToSession("100", g.Profile.ID, session, logOutMessage)
 	}
 }
 
@@ -238,10 +235,6 @@ func (g *GameSpySession) setStatus(command common.GameSpyCommand) {
 
 	g.LocString = locstring
 	g.Status = statusMsg
-
-	if !g.StatusSet && g.Profile.OpenHost {
-		g.openHostEnabled(false, false)
-	}
 
 	g.StatusSet = true
 
@@ -345,49 +338,6 @@ func (g *GameSpySession) sendLogoutStatus() {
 
 	for _, storedPid := range g.AuthFriendList {
 		if session, ok := sessions[storedPid]; ok && session.LoggedIn && session.isFriendAuthorized(g.Profile.ID) {
-			delProfileIDIndex := session.getAuthorizedFriendIndex(g.Profile.ID)
-			removeFromUint32Array(&session.AuthFriendList, delProfileIDIndex)
-			sendMessageToSession("100", g.Profile.ID, session, logOutMessage)
-		}
-	}
-}
-
-func (g *GameSpySession) openHostEnabled(sendStatus bool, lock bool) {
-	if lock {
-		mutex.Lock()
-		defer mutex.Unlock()
-	}
-
-	for _, session := range sessions {
-		if session.LoggedIn && session.isFriendAdded(g.Profile.ID) && !session.isFriendAuthorized(g.Profile.ID) {
-			session.AuthFriendList = append(session.AuthFriendList, g.Profile.ID)
-			g.AuthFriendList = append(g.AuthFriendList, session.Profile.ID)
-			sendMessageToSession("4", g.Profile.ID, session, "")
-
-			if session.isBm1AuthMessageNeeded() {
-				sendMessageToSession("1", g.Profile.ID, session, bm1AuthMessage)
-			}
-
-			if sendStatus {
-				session.sendFriendStatus(g.Profile.ID)
-			}
-		}
-	}
-}
-
-func (g *GameSpySession) openHostDisabled() {
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	for _, id := range g.AuthFriendList {
-		if g.isFriendAdded(id) {
-			return
-		}
-
-		delProfileIDIndex := g.getAuthorizedFriendIndex(id)
-		removeFromUint32Array(&g.AuthFriendList, delProfileIDIndex)
-
-		if session, ok := sessions[id]; ok && session.LoggedIn && session.isFriendAuthorized(g.Profile.ID) {
 			delProfileIDIndex := session.getAuthorizedFriendIndex(g.Profile.ID)
 			removeFromUint32Array(&session.AuthFriendList, delProfileIDIndex)
 			sendMessageToSession("100", g.Profile.ID, session, logOutMessage)

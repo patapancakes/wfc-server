@@ -267,8 +267,6 @@ func checkReservationAllowed(moduleName string, sender, destination *Session, jo
 		return "restricted_join"
 	}
 
-	// TODO: Once OpenHost is implemented, disallow joining public rooms
-
 	if destination.groupPointer == nil {
 		// Destination is not in a group, check their dwc_mtype instead
 		if destination.Data["dwc_mtype"] != "2" && destination.Data["dwc_mtype"] != "3" {

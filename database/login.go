@@ -48,7 +48,7 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 		var firstName *string
 		var lastName *string
 
-		err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &expectedNgId, &firstName, &lastName, &profile.OpenHost, &lastIPAddress)
+		err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &expectedNgId, &firstName, &lastName, &lastIPAddress)
 		if err != nil {
 			return Profile{}, err
 		}
@@ -146,7 +146,7 @@ func (c *Connection) LoginUserToGameStats(userId uint64, gsbrcd string) (Profile
 	var lastName *string
 	var lastIPAddress *string
 
-	err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &profile.NgDeviceId, &firstName, &lastName, &profile.OpenHost, &lastIPAddress)
+	err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &profile.NgDeviceId, &firstName, &lastName, &lastIPAddress)
 	if err != nil {
 		return Profile{}, err
 	}
