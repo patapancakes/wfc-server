@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 	"wwfc/api"
 	"wwfc/common"
@@ -148,6 +149,12 @@ func replyHTTPError(w http.ResponseWriter, errorCode int, errorString string) {
 }
 
 func handleUnknown(w http.ResponseWriter, r *http.Request) {
+	if !strings.HasSuffix(r.Host, "nintendowifi.net") {
+		conn, _, _ := w.(http.Hijacker).Hijack()
+		conn.Close()
+		return
+	}
+
 	logging.Info(getModuleName(r), "Unknown request:", aurora.Yellow(r.Method), aurora.Cyan(r.Host+r.URL.Path))
 	replyHTTPError(w, http.StatusNotFound, "404 Not Found")
 }
