@@ -84,7 +84,6 @@ CREATE TABLE IF NOT EXISTS `profiles` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) unsigned NOT NULL,
   `gsbrcd` tinytext NOT NULL,
-  `ng_device_id` int(10) unsigned DEFAULT NULL,
   `firstname` tinytext DEFAULT NULL,
   `lastname` tinytext DEFAULT '',
   `last_ip_address` tinytext DEFAULT '',

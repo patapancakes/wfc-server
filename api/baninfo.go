@@ -33,25 +33,15 @@ func HandleBanInfo(w http.ResponseWriter, r *http.Request) {
 	search = strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(search, " ", ""), "-", ""))
 
 	profileId := uint32(0)
-	ngDeviceId := uint32(0)
-	if strings.HasPrefix(search, "NG") {
-		ngId, err := strconv.ParseUint(search[2:], 16, 32)
-		if err != nil {
-			replyError(w, http.StatusBadRequest, APIErrorInvalidQuery)
-			return
-		}
-		ngDeviceId = uint32(ngId)
-	} else {
-		pId, err := strconv.ParseUint(search, 10, 64)
-		if err != nil {
-			replyError(w, http.StatusBadRequest, APIErrorInvalidQuery)
-			return
-		}
-		// Truncate to 32 bits as that's how friend codes work
-		profileId = uint32(pId)
+	pId, err := strconv.ParseUint(search, 10, 64)
+	if err != nil {
+		replyError(w, http.StatusBadRequest, APIErrorInvalidQuery)
+		return
 	}
+	// Truncate to 32 bits as that's how friend codes work
+	profileId = uint32(pId)
 
-	tos, issued, expires, reason, bannedProfileId, gsbrCode, inGameName, err := db.SearchProfileBan(profileId, ngDeviceId, "", "")
+	tos, issued, expires, reason, bannedProfileId, gsbrCode, inGameName, err := db.SearchProfileBan(profileId, "", "")
 	if err != nil {
 		replyError(w, http.StatusOK, APIErrorBanNotFound)
 		return

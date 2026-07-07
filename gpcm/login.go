@@ -81,8 +81,6 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 
 	g.InGameName = common.UTF16Decode(authTokenObj.InGameScreenName[:], endianness)
 
-	deviceId := uint32(0)
-
 	if hostPlatform, exists := command.OtherValues["wl:host"]; exists {
 		g.HostPlatform = hostPlatform
 	} else {
@@ -140,7 +138,7 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 		cmdProfileId = uint32(cmdProfileId2)
 	}
 
-	if !g.performLoginWithDatabase(authTokenObj.UserID, common.NullTerminatedString(authTokenObj.GsbrCode[:]), cmdProfileId, deviceId) {
+	if !g.performLoginWithDatabase(authTokenObj.UserID, common.NullTerminatedString(authTokenObj.GsbrCode[:]), cmdProfileId) {
 		return
 	}
 
@@ -238,14 +236,14 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 	)
 }
 
-func (g *GameSpySession) performLoginWithDatabase(userId uint64, gsbrCode string, profileId uint32, deviceId uint32) bool {
+func (g *GameSpySession) performLoginWithDatabase(userId uint64, gsbrCode string, profileId uint32) bool {
 	// Get IP address without port
 	ipAddress := g.RemoteAddr
 	if strings.Contains(ipAddress, ":") {
 		ipAddress = ipAddress[:strings.Index(ipAddress, ":")]
 	}
 
-	profile, err := db.LoginUserToGPCM(userId, gsbrCode, profileId, deviceId, ipAddress, g.InGameName)
+	profile, err := db.LoginUserToGPCM(userId, gsbrCode, profileId, ipAddress, g.InGameName)
 	g.Profile = profile
 
 	if err != nil {
@@ -266,38 +264,6 @@ func (g *GameSpySession) performLoginWithDatabase(userId uint64, gsbrCode string
 				Fatal:       true,
 				WWFCMessage: WWFCMsgProfileIDInvalid,
 			})
-		case database.ErrDeviceIDMismatch:
-			if strings.HasPrefix(g.HostPlatform, "Dolphin") {
-				g.replyError(GPError{
-					ErrorCode:   ErrLogin.ErrorCode,
-					ErrorString: "The device ID does not match the one on record.",
-					Fatal:       true,
-					WWFCMessage: WWFCMsgConsoleMismatchDolphin,
-				})
-			} else {
-				g.replyError(GPError{
-					ErrorCode:   ErrLogin.ErrorCode,
-					ErrorString: "The device ID does not match the one on record.",
-					Fatal:       true,
-					WWFCMessage: WWFCMsgConsoleMismatch,
-				})
-			}
-		case database.ErrProhibitedDeviceID:
-			if strings.HasPrefix(g.HostPlatform, "Dolphin") {
-				g.replyError(GPError{
-					ErrorCode:   ErrLogin.ErrorCode,
-					ErrorString: "Prohibited device ID used in signature.",
-					Fatal:       true,
-					WWFCMessage: WWFCMsgDolphinSetupRequired,
-				})
-			} else {
-				g.replyError(GPError{
-					ErrorCode:   ErrLogin.ErrorCode,
-					ErrorString: "Prohibited device ID used in signature.",
-					Fatal:       true,
-					WWFCMessage: WWFCMsgUnknownLoginError,
-				})
-			}
 		case database.ErrProfileBannedTOS:
 			g.replyError(GPError{
 				ErrorCode:   ErrLogin.ErrorCode,

@@ -201,8 +201,7 @@ var (
 				"Terms of Service.\n" +
 				"Visit wfc.wiilink.ca/tos\n" +
 				"\n" +
-				"Error Code: %[1]d\n" +
-				"Support Info: NG%08[2]x",
+				"Error Code: %[1]d\n",
 		},
 	}
 
@@ -215,8 +214,7 @@ var (
 				"of the Terms of Service.\n" +
 				"Visit wfc.wiilink.ca/tos\n" +
 				"\n" +
-				"Error Code: %[1]d\n" +
-				"Support Info: NG%08[2]x",
+				"Error Code: %[1]d\n",
 		},
 	}
 
@@ -229,8 +227,7 @@ var (
 				"of the WiiLink WFC Rules.\n" +
 				"Visit wfc.wiilink.ca/rules\n" +
 				"\n" +
-				"Error Code: %[1]d\n" +
-				"Support Info: NG%08[2]x",
+				"Error Code: %[1]d\n",
 		},
 	}
 
@@ -243,8 +240,7 @@ var (
 				"of the WiiLink WFC Rules.\n" +
 				"Visit wfc.wiilink.ca/rules\n" +
 				"\n" +
-				"Error Code: %[1]d\n" +
-				"Support Info: NG%08[2]x",
+				"Error Code: %[1]d\n",
 		},
 	}
 
@@ -254,8 +250,7 @@ var (
 			LangEnglish: "" +
 				"You are banned from public matches.\n" +
 				"Reason: %[3]s\n" +
-				"Error Code: %[1]d\n" +
-				"Support Info: NG%08[2]x",
+				"Error Code: %[1]d\n",
 		},
 	}
 
@@ -265,8 +260,7 @@ var (
 			LangEnglish: "" +
 				"You have been banned from public matches.\n" +
 				"Reason: %[3]s\n" +
-				"Error Code: %[1]d\n" +
-				"Support Info: NG%08[2]x",
+				"Error Code: %[1]d\n",
 		},
 	}
 
@@ -311,8 +305,7 @@ var (
 				"You have been kicked from\n" +
 				"WiiLink WFC by a moderator.\n" +
 				"Reason: %[3]s\n" +
-				"Error Code: %[1]d\n" +
-				"Support Info: NG%08[2]x",
+				"Error Code: %[1]d\n",
 		},
 	}
 
@@ -405,7 +398,7 @@ func (err GPError) GetMessage() string {
 	return common.CreateGameSpyMessage(command)
 }
 
-func (err GPError) GetMessageTranslate(gameName string, region byte, lang byte, cfc uint64, ngid uint32) (string, int) {
+func (err GPError) GetMessageTranslate(gameName string, region byte, lang byte, cfc uint64) (string, int) {
 	command := common.GameSpyCommand{
 		Command:      "error",
 		CommandValue: "",
@@ -462,7 +455,7 @@ func (err GPError) GetMessageTranslate(gameName string, region byte, lang byte, 
 	}
 
 	if errMsg != "" && wwfcMessage != nil {
-		errMsg = fmt.Sprintf(errMsg, wwfcMessage.ErrorCode, ngid, reason)
+		errMsg = fmt.Sprintf(errMsg, wwfcMessage.ErrorCode, reason)
 		errMsgUTF16 := utf16.Encode([]rune(errMsg))
 		errMsgByteArray := common.UTF16ToByteArray(errMsgUTF16)
 		command.OtherValues["wl:errmsg"] = common.Base64DwcEncoding.EncodeToString(errMsgByteArray)
@@ -494,12 +487,7 @@ func (g *GameSpySession) replyError(gpErr GPError) {
 		return
 	}
 
-	deviceId := g.Profile.RestrictedDeviceId
-	if deviceId == 0 {
-		deviceId = g.Profile.NgDeviceId
-	}
-
-	msg, wwfcErrorCode := gpErr.GetMessageTranslate(g.GameName, g.Region, g.Language, g.ConsoleFriendCode, deviceId)
+	msg, wwfcErrorCode := gpErr.GetMessageTranslate(g.GameName, g.Region, g.Language, g.ConsoleFriendCode)
 	// logging.Info(g.ModuleName, "Sending error message:", msg)
 	err := common.SendPacket(ServerName, g.ConnIndex, []byte(msg))
 	if gpErr.Fatal || err != nil {
