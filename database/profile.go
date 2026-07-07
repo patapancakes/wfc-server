@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	InsertProfile              = `INSERT INTO profiles (user_id, gsbrcd, password, ng_device_id, email, unique_nick) VALUES (?, ?, ?, ?, ?, ?) RETURNING profile_id`
-	InsertProfileWithID        = `INSERT INTO profiles (profile_id, user_id, gsbrcd, password, ng_device_id, email, unique_nick) VALUES (?, ?, ?, ?, ?, ?, ?)`
+	InsertProfile              = `INSERT INTO profiles (user_id, gsbrcd, ng_device_id, email, unique_nick) VALUES (?, ?, ?, ?, ?) RETURNING profile_id`
+	InsertProfileWithID        = `INSERT INTO profiles (profile_id, user_id, gsbrcd, ng_device_id, email, unique_nick) VALUES (?, ?, ?, ?, ?, ?)`
 	UpdateProfileTable         = `UPDATE profiles SET firstname = CASE WHEN ? THEN ? ELSE firstname END, lastname = CASE WHEN ? THEN ? ELSE lastname END, open_host = CASE WHEN ? THEN ? ELSE open_host END WHERE profile_id = ?`
 	UpdateUserProfileID        = `UPDATE profiles SET profile_id = ? WHERE user_id = ? AND gsbrcd = ?`
 	UpdateProfileNGDeviceID    = `UPDATE profiles SET ng_device_id = ? WHERE profile_id = ?`
@@ -49,7 +49,7 @@ var (
 
 func (c *Connection) CreateProfile(profile *Profile) error {
 	if profile.ProfileId == 0 {
-		return c.pool.QueryRowContext(c.ctx, InsertProfile, profile.UserId, profile.GsbrCode, "", profile.NgDeviceId, profile.Email, profile.UniqueNick).Scan(&profile.ProfileId)
+		return c.pool.QueryRowContext(c.ctx, InsertProfile, profile.UserId, profile.GsbrCode, profile.NgDeviceId, profile.Email, profile.UniqueNick).Scan(&profile.ProfileId)
 	}
 
 	if profile.ProfileId >= 1000000000 {
@@ -66,7 +66,7 @@ func (c *Connection) CreateProfile(profile *Profile) error {
 		return ErrProfileIDInUse
 	}
 
-	_, err = c.pool.ExecContext(c.ctx, InsertProfileWithID, profile.ProfileId, profile.UserId, profile.GsbrCode, "", profile.NgDeviceId, profile.Email, profile.UniqueNick)
+	_, err = c.pool.ExecContext(c.ctx, InsertProfileWithID, profile.ProfileId, profile.UserId, profile.GsbrCode, profile.NgDeviceId, profile.Email, profile.UniqueNick)
 	return err
 }
 
