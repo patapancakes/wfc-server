@@ -384,7 +384,7 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 		"proof":      proof,
 		"userid":     strconv.FormatUint(replyUserId, 10),
 		"profileid":  strconv.FormatUint(uint64(g.Profile.ID), 10),
-		"uniquenick": g.Profile.UniqueNick,
+		"uniquenick": g.Profile.UniqueNick(),
 		"lt":         g.LoginTicket,
 		"id":         command.OtherValues["id"],
 	}

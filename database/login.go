@@ -34,8 +34,6 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 	if !exists {
 		profile.ID = profileId
 		profile.NgDeviceId = ngDeviceId
-		profile.UniqueNick = common.Base32Encode(userId) + gsbrcd
-		profile.Email = profile.UniqueNick + "@nds"
 
 		// Create the GPCM account
 		err := c.CreateProfile(&profile)
@@ -52,7 +50,7 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 		var lastName *string
 		var allowDefaultKeys bool
 
-		err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &expectedNgId, &profile.Email, &profile.UniqueNick, &firstName, &lastName, &profile.OpenHost, &lastIPAddress, &allowDefaultKeys)
+		err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &expectedNgId, &firstName, &lastName, &profile.OpenHost, &lastIPAddress, &allowDefaultKeys)
 		if err != nil {
 			return Profile{}, err
 		}
@@ -157,7 +155,7 @@ func (c *Connection) LoginUserToGameStats(userId uint64, gsbrcd string) (Profile
 	var lastIPAddress *string
 	var allowDefaultKeys bool
 
-	err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &profile.NgDeviceId, &profile.Email, &profile.UniqueNick, &firstName, &lastName, &profile.OpenHost, &lastIPAddress, &allowDefaultKeys)
+	err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &profile.NgDeviceId, &firstName, &lastName, &profile.OpenHost, &lastIPAddress, &allowDefaultKeys)
 	if err != nil {
 		return Profile{}, err
 	}
