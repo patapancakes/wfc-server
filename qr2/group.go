@@ -1,8 +1,6 @@
 package qr2
 
 import (
-	"encoding/base64"
-	"encoding/binary"
 	"encoding/gob"
 	"fmt"
 	"os"
@@ -406,77 +404,6 @@ func ProcessNATNEGReport(result byte, ip1 string, ip2 string) {
 	}
 }
 
-func ProcessUSER(senderPid uint32, senderIP uint64, packet []byte) {
-	moduleName := "QR2:ProcessUSER/" + strconv.FormatUint(uint64(senderPid), 10)
-
-	mutex.Lock()
-	login := logins[senderPid]
-	if login == nil {
-		mutex.Unlock()
-		logging.Warn(moduleName, "Received USER packet from non-existent profile ID", aurora.Cyan(senderPid))
-		return
-	}
-
-	session := login.session
-	if session == nil {
-		mutex.Unlock()
-		logging.Warn(moduleName, "Received USER packet from profile ID", aurora.Cyan(senderPid), "but no session exists")
-		return
-	}
-	mutex.Unlock()
-
-	miiGroupCount := binary.BigEndian.Uint16(packet[0x04:0x06])
-	if miiGroupCount != 2 {
-		logging.Error(moduleName, "Received USER packet with unexpected Mii group count", aurora.Cyan(miiGroupCount))
-		// Kick the client
-		gpErrorCallback(senderPid, "bad_packet")
-		return
-	}
-
-	miiGroupBitflags := binary.BigEndian.Uint32(packet[0x00:0x04])
-
-	var miiData []string
-	var miiName []string
-	for i := 0; i < int(miiGroupCount); i++ {
-		if miiGroupBitflags&(1<<uint(i)) == 0 {
-			continue
-		}
-
-		index := 0x08 + i*0x4C
-		mii := common.RawMiiFromBytes(packet[index : index+0x4C])
-		if mii.CalculateMiiCRC() != 0x0000 {
-			logging.Error(moduleName, "Received USER packet with invalid Mii data CRC")
-			gpErrorCallback(senderPid, "bad_packet")
-			return
-		}
-
-		createId := binary.BigEndian.Uint64(packet[index+0x18 : index+0x20])
-		official, _ := common.SearchOfficialMiiData(createId)
-		if official {
-			miiName = append(miiName, "Player")
-		} else {
-			decodedName, err := common.GetWideString(packet[index+0x2:index+0x2+20], binary.BigEndian)
-			if err != nil {
-				logging.Error(moduleName, "Failed to parse Mii name:", err)
-				gpErrorCallback(senderPid, "bad_packet")
-				return
-			}
-
-			miiName = append(miiName, decodedName)
-		}
-
-		miiData = append(miiData, base64.StdEncoding.EncodeToString(packet[index:index+0x4A]))
-	}
-
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	for i, name := range miiName {
-		session.Data["+mii"+strconv.Itoa(i)] = miiData[i]
-		session.Data["+mii_name"+strconv.Itoa(i)] = name
-	}
-}
-
 // findNewServer attempts to find the new server/host in the group when the current server goes down.
 // If no server is found, the group's server pointer is set to nil.
 // Expects the mutex to be locked.
@@ -524,68 +451,6 @@ func (g *Group) updateMatchType() {
 	}
 
 	g.MatchType = g.server.Data["dwc_mtype"]
-}
-
-func ProcessMKWSelectRecord(profileId uint32, key string, value string) {
-	moduleName := "QR2:MKWSelectRecord:" + strconv.FormatUint(uint64(profileId), 10)
-
-	mutex.Lock()
-	login := logins[profileId]
-	if login == nil {
-		mutex.Unlock()
-		logging.Warn(moduleName, "Received SELECT record from non-existent profile ID", aurora.Cyan(profileId))
-		return
-	}
-
-	session := login.session
-	if session == nil {
-		mutex.Unlock()
-		logging.Warn(moduleName, "Received SELECT record  from profile ID", aurora.Cyan(profileId), "but no session exists")
-		return
-	}
-	mutex.Unlock()
-
-	group := session.groupPointer
-	if group == nil {
-		return
-	}
-
-	keyColored := aurora.BrightCyan(key).String()
-
-	switch key {
-	case "wl:mkw_select_course":
-		courseId, err := strconv.ParseUint(value, 10, 32)
-		if err != nil {
-			logging.Error(moduleName, "Error decoding", keyColored+":", err.Error())
-			return
-		}
-
-		logging.Info(moduleName, "Selected course", aurora.BrightCyan(strconv.FormatUint(courseId, 10)))
-
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		group.MKWRaceNumber++
-		group.MKWCourseID = int(courseId)
-		group.MKWEngineClassID = -1
-		return
-
-	case "wl:mkw_select_cc":
-		ccId, err := strconv.ParseUint(value, 10, 32)
-		if err != nil {
-			logging.Error(moduleName, "Error decoding", keyColored+":", err.Error())
-			return
-		}
-
-		logging.Info(moduleName, "Selected CC", aurora.BrightCyan(strconv.FormatUint(ccId, 10)))
-
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		group.MKWEngineClassID = int(ccId)
-		return
-	}
-
 }
 
 // saveGroups saves the current groups state to disk.

@@ -89,8 +89,6 @@ func StartServer(reload bool) {
 		"logged_out",
 		"received_login_info",
 		"device_authenticated",
-		"reported_bad_packet",
-		"reported_stall",
 		"gpcm_returned_error",
 	})
 }
@@ -247,7 +245,6 @@ func HandlePacket(index uint64, data []byte) {
 		return
 	}
 
-	commands = session.handleCommand("wl:report", commands, session.handleWWFCReport)
 	commands = session.handleCommand("updatepro", commands, session.updateProfile)
 	commands = session.handleCommand("status", commands, session.setStatus)
 	commands = session.handleCommand("addbuddy", commands, session.addFriend)

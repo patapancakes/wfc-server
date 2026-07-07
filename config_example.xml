@@ -105,8 +105,6 @@
                          <event>logged_out</event>
                          <event>received_login_info</event>
                          <event>device_authenticated</event>
-                         <event>reported_bad_packet</event>
-                         <event>reported_stall</event>
                          <event>gpcm_returned_error</event>
                          <event>group_created</event>
                          <event>group_deleted</event>
