@@ -1,39 +1,28 @@
 package common
 
 import (
+	"encoding/binary"
+	"math/bits"
+	"net/netip"
 	"strconv"
-	"strings"
 )
 
-func IPFormatToInt(ip string) (int32, uint16) {
-	port := 0
+func IPFormatToInt(ip string) (uint32, uint16) {
+	var addr netip.Addr
+	var port uint16
 
-	if strings.Contains(ip, ":") {
-		ipSplit := strings.Split(ip, ":")
-
-		var err error
-		port, err = strconv.Atoi(ipSplit[1])
-		if err != nil {
-			panic(err)
-		}
-
-		ip = ipSplit[0]
+	addrport, err := netip.ParseAddrPort(ip)
+	if err != nil {
+		addr, _ = netip.ParseAddr(ip)
+	} else {
+		addr = addrport.Addr()
+		port = addrport.Port()
 	}
 
-	var intIP int
-	for i, s := range strings.Split(ip, ".") {
-		val, err := strconv.Atoi(s)
-		if err != nil {
-			panic(err)
-		}
-
-		intIP |= val << (24 - i*8)
-	}
-
-	return int32(intIP), uint16(port)
+	return binary.BigEndian.Uint32(addr.AsSlice()), port
 }
 
-func IPFormatNoPortToInt(ip string) int32 {
+func IPFormatNoPortToInt(ip string) uint32 {
 	intIP, _ := IPFormatToInt(ip)
 
 	return intIP
@@ -42,39 +31,33 @@ func IPFormatNoPortToInt(ip string) int32 {
 func IPFormatToString(ip string) (string, string) {
 	intIP, intPort := IPFormatToInt(ip)
 
-	return strconv.FormatInt(int64(intIP), 10), strconv.FormatUint(uint64(intPort), 10)
+	return strconv.Itoa(int(int32((intIP)))), strconv.Itoa(int(intPort))
 }
 
 func IPFormatToStringLE(ip string) (string, string) {
 	intIP, intPort := IPFormatToInt(ip)
 
 	// Convert to little endian and print as big endian int
-	intIP = int32((uint32(intIP) >> 24) | ((uint32(intIP) & 0x00FF0000) >> 8) | ((uint32(intIP) & 0x0000FF00) << 8) | ((uint32(intIP) & 0x000000FF) << 24))
-	return strconv.FormatInt(int64(intIP), 10), strconv.FormatUint(uint64(intPort), 10)
+	return strconv.Itoa(int(int32(bits.ReverseBytes32(intIP)))), strconv.Itoa(int(intPort))
 }
 
 func IPFormatBytes(ip string) []byte {
-	if strings.Contains(ip, ":") {
-		ip = strings.Split(ip, ":")[0]
+	var addr netip.Addr
+
+	addrport, err := netip.ParseAddrPort(ip)
+	if err != nil {
+		addr, _ = netip.ParseAddr(ip)
+	} else {
+		addr = addrport.Addr()
 	}
 
-	var bytes []byte
-	for _, s := range strings.Split(ip, ".") {
-		val, err := strconv.Atoi(s)
-		if err != nil {
-			panic(err)
-		}
-
-		bytes = append(bytes, byte(val))
-	}
-
-	return bytes
+	return addr.AsSlice()
 }
 
 var (
 	reservedIPList = []struct {
-		ip   int32
-		mask int32
+		ip   uint32
+		mask uint32
 	}{
 		{IPFormatNoPortToInt("0.0.0.0"), 8},       // RFC1122 "This host on this network"
 		{IPFormatNoPortToInt("10.0.0.0"), 8},      // RFC1918 Private-Use
@@ -98,7 +81,7 @@ var (
 )
 
 // TODO: Test this
-func IsReservedIP(ip int32) bool {
+func IsReservedIP(ip uint32) bool {
 	for _, reserved := range reservedIPList {
 		rMask := 32 - reserved.mask
 		if ip>>rMask == reserved.ip>>rMask {

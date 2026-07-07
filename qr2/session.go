@@ -254,7 +254,7 @@ func (session *Session) setProfileID(moduleName string, newPID string, gpcmIP st
 
 func makeLookupAddr(addr string) uint64 {
 	ip, port := common.IPFormatToInt(addr)
-	return (uint64(port) << 32) | uint64(uint32(ip))
+	return (uint64(port) << 32) | uint64(ip)
 }
 
 // Get a copy of the list of servers
