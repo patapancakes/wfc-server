@@ -76,14 +76,14 @@ func (g *GameStatsSession) authp(command common.GameSpyCommand) {
 		return
 	}
 
-	g.ModuleName = "GSTATS:" + strconv.FormatInt(int64(g.Profile.ProfileId), 10)
+	g.ModuleName = "GSTATS:" + strconv.FormatInt(int64(g.Profile.ID), 10)
 	g.Authenticated = true
 
 	logging.Notice(g.ModuleName, "Authenticated, game name:", aurora.Cyan(g.gameInfo.Name))
 
 	g.Write(common.GameSpyCommand{
 		Command:      "pauthr",
-		CommandValue: strconv.FormatUint(uint64(g.Profile.ProfileId), 10),
+		CommandValue: strconv.FormatUint(uint64(g.Profile.ID), 10),
 		OtherValues: map[string]string{
 			"lid": lid,
 		},

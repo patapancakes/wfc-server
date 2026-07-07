@@ -321,8 +321,8 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 		logging.Event(
 			"profile_created",
 			map[string]any{
-				"user_id":    g.Profile.UserId,
-				"profile_id": g.Profile.ProfileId,
+				"user_id":    g.Profile.UserID,
+				"profile_id": g.Profile.ID,
 				"game_name":  g.GameName,
 				"ip_address": g.RemoteAddr,
 			},
@@ -330,12 +330,12 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 
 	}
 
-	g.ModuleName = "GPCM:" + strconv.FormatInt(int64(g.Profile.ProfileId), 10) + "*"
-	g.ModuleName += "/" + common.CalcFriendCodeString(g.Profile.ProfileId, g.Profile.GsbrCode[:4]) + "*"
+	g.ModuleName = "GPCM:" + strconv.FormatInt(int64(g.Profile.ID), 10) + "*"
+	g.ModuleName += "/" + common.CalcFriendCodeString(g.Profile.ID, g.Profile.GsbrCode[:4]) + "*"
 
 	// Check to see if a session is already open with this profile ID
 	mutex.Lock()
-	otherSession, exists := sessions[g.Profile.ProfileId]
+	otherSession, exists := sessions[g.Profile.ID]
 	if exists {
 		otherSession.replyError(ErrForcedDisconnect)
 
@@ -344,7 +344,7 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 			time.Sleep(300 * time.Millisecond)
 			mutex.Lock()
 
-			if _, exists = sessions[g.Profile.ProfileId]; !exists {
+			if _, exists = sessions[g.Profile.ID]; !exists {
 				break
 			}
 
@@ -357,23 +357,23 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 			}
 		}
 	}
-	sessions[g.Profile.ProfileId] = g
+	sessions[g.Profile.ID] = g
 	mutex.Unlock()
 
 	g.AuthToken = authToken
-	g.LoginTicket = common.GPCMLoginTicket{ProfileID: g.Profile.ProfileId}.Marshal()
+	g.LoginTicket = common.GPCMLoginTicket{ProfileID: g.Profile.ID}.Marshal()
 	g.SessionKey = rand.Int31n(290000000) + 10000000
 
 	g.DeviceAuthenticated = deviceAuth
 	g.LoggedIn = true
 
-	g.ModuleName = "GPCM:" + strconv.FormatInt(int64(g.Profile.ProfileId), 10)
-	g.ModuleName += "/" + common.CalcFriendCodeString(g.Profile.ProfileId, g.Profile.GsbrCode[:4])
+	g.ModuleName = "GPCM:" + strconv.FormatInt(int64(g.Profile.ID), 10)
+	g.ModuleName += "/" + common.CalcFriendCodeString(g.Profile.ID, g.Profile.GsbrCode[:4])
 
 	// Notify QR2 of the login
-	qr2.Login(g.Profile.ProfileId, g.GameCode, g.InGameName, g.ConsoleFriendCode, g.Profile.GsbrCode[:4], g.RemoteAddr, g.NeedsExploit, g.DeviceAuthenticated, g.Profile.Restricted)
+	qr2.Login(g.Profile.ID, g.GameCode, g.InGameName, g.ConsoleFriendCode, g.Profile.GsbrCode[:4], g.RemoteAddr, g.NeedsExploit, g.DeviceAuthenticated, g.Profile.Restricted)
 
-	replyUserId := g.Profile.UserId
+	replyUserId := g.Profile.UserID
 	if g.UnitCode == UnitCodeDS {
 		// Workaround for SDK bug
 		replyUserId = 0
@@ -383,7 +383,7 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 		"sesskey":    strconv.FormatInt(int64(g.SessionKey), 10),
 		"proof":      proof,
 		"userid":     strconv.FormatUint(replyUserId, 10),
-		"profileid":  strconv.FormatUint(uint64(g.Profile.ProfileId), 10),
+		"profileid":  strconv.FormatUint(uint64(g.Profile.ID), 10),
 		"uniquenick": g.Profile.UniqueNick,
 		"lt":         g.LoginTicket,
 		"id":         command.OtherValues["id"],
@@ -413,7 +413,7 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 	logging.Event(
 		"logged_in",
 		map[string]any{
-			"profile_id":   g.Profile.ProfileId,
+			"profile_id":   g.Profile.ID,
 			"game_name":    g.GameName,
 			"in_game_name": g.InGameName,
 			"ip_address":   g.RemoteAddr,
@@ -432,12 +432,12 @@ func (g *GameSpySession) exLogin(command common.GameSpyCommand) {
 		return
 	}
 
-	if !g.performLoginWithDatabase(g.Profile.UserId, g.Profile.GsbrCode, 0, defaultKey, deviceId, true) {
+	if !g.performLoginWithDatabase(g.Profile.UserID, g.Profile.GsbrCode, 0, defaultKey, deviceId, true) {
 		return
 	}
 
 	g.DeviceAuthenticated = true
-	qr2.SetDeviceAuthenticated(g.Profile.ProfileId)
+	qr2.SetDeviceAuthenticated(g.Profile.ID)
 }
 
 func checkPayloadVersion(payloadVer string) bool {
@@ -499,7 +499,7 @@ func (g *GameSpySession) verifyExLoginInfo(command common.GameSpyCommand, authTo
 	logging.Event(
 		"device_authenticated",
 		map[string]any{
-			"profile_id":      g.Profile.ProfileId,
+			"profile_id":      g.Profile.ID,
 			"ng_device_id":    g.DeviceId,
 			"payload_version": payloadVer,
 		},

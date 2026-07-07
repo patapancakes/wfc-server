@@ -486,7 +486,7 @@ func (g *GameSpySession) replyError(gpErr GPError) {
 			common.ShouldNotError(common.CloseConnection(ServerName, g.ConnIndex))
 		}
 		logging.Event("gpcm_returned_error", map[string]any{
-			"profile_id":   g.Profile.ProfileId,
+			"profile_id":   g.Profile.ID,
 			"error_code":   gpErr.ErrorCode,
 			"error_string": gpErr.ErrorString,
 			"fatal":        gpErr.Fatal,
@@ -510,7 +510,7 @@ func (g *GameSpySession) replyError(gpErr GPError) {
 	}
 
 	logging.Event("gpcm_returned_error", map[string]any{
-		"profile_id":         g.Profile.ProfileId,
+		"profile_id":         g.Profile.ID,
 		"error_code":         gpErr.ErrorCode,
 		"error_string":       gpErr.ErrorString,
 		"fatal":              gpErr.Fatal,

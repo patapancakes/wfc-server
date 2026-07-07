@@ -125,14 +125,14 @@ func CloseConnection(index uint64) {
 	logging.Notice(session.ModuleName, "Connection closed")
 
 	if session.LoggedIn {
-		qr2.Logout(session.Profile.ProfileId)
+		qr2.Logout(session.Profile.ID)
 		if session.QR2IP != 0 {
-			qr2.ProcessGPStatusUpdate(session.Profile.ProfileId, session.QR2IP, "0")
+			qr2.ProcessGPStatusUpdate(session.Profile.ID, session.QR2IP, "0")
 		}
 		session.sendLogoutStatus()
 
 		logging.Event("logged_out", map[string]any{
-			"profile_id": session.Profile.ProfileId,
+			"profile_id": session.Profile.ID,
 		})
 	}
 
@@ -141,7 +141,7 @@ func CloseConnection(index uint64) {
 
 	if session.LoggedIn {
 		session.LoggedIn = false
-		delete(sessions, session.Profile.ProfileId)
+		delete(sessions, session.Profile.ID)
 	}
 }
 

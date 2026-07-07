@@ -38,14 +38,14 @@ func (g *GameSpySession) getProfile(command common.GameSpyCommand) {
 		}
 	}
 
-	if profile.ProfileId == g.Profile.ProfileId {
+	if profile.ID == g.Profile.ID {
 		g.WriteBuffer += common.CreateGameSpyMessage(common.GameSpyCommand{
 			Command:      "pi",
 			CommandValue: "",
 			OtherValues: map[string]string{
 				"profileid":  command.OtherValues["profileid"],
 				"nick":       profile.UniqueNick,
-				"userid":     strconv.FormatUint(uint64(profile.UserId), 10),
+				"userid":     strconv.FormatUint(uint64(profile.UserID), 10),
 				"email":      profile.Email,
 				"sig":        common.RandomHexString(32),
 				"uniquenick": profile.UniqueNick,

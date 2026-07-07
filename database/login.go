@@ -25,14 +25,14 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 	}
 
 	profile := Profile{
-		UserId:   userId,
+		UserID:   userId,
 		GsbrCode: gsbrcd,
 	}
 
 	var lastIPAddress *string
 
 	if !exists {
-		profile.ProfileId = profileId
+		profile.ID = profileId
 		profile.NgDeviceId = ngDeviceId
 		profile.UniqueNick = common.Base32Encode(userId) + gsbrcd
 		profile.Email = profile.UniqueNick + "@nds"
@@ -40,11 +40,11 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 		// Create the GPCM account
 		err := c.CreateProfile(&profile)
 		if err != nil {
-			logging.Error("DATABASE", "Error creating profile:", aurora.Cyan(userId), aurora.Cyan(gsbrcd), aurora.Cyan(profile.ProfileId), "\nerror:", err.Error())
+			logging.Error("DATABASE", "Error creating profile:", aurora.Cyan(userId), aurora.Cyan(gsbrcd), aurora.Cyan(profile.ID), "\nerror:", err.Error())
 			return Profile{}, err
 		}
 
-		logging.Notice("DATABASE", "Created new GPCM profile:", aurora.Cyan(userId), aurora.Cyan(gsbrcd), aurora.Cyan(profile.ProfileId))
+		logging.Notice("DATABASE", "Created new GPCM profile:", aurora.Cyan(userId), aurora.Cyan(gsbrcd), aurora.Cyan(profile.ID))
 		profile.Created = true
 	} else {
 		var expectedNgId *uint32
@@ -52,7 +52,7 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 		var lastName *string
 		var allowDefaultKeys bool
 
-		err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ProfileId, &expectedNgId, &profile.Email, &profile.UniqueNick, &firstName, &lastName, &profile.OpenHost, &lastIPAddress, &allowDefaultKeys)
+		err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &expectedNgId, &profile.Email, &profile.UniqueNick, &firstName, &lastName, &profile.OpenHost, &lastIPAddress, &allowDefaultKeys)
 		if err != nil {
 			return Profile{}, err
 		}
@@ -72,27 +72,27 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 		if expectedNgId != nil && *expectedNgId != 0 {
 			profile.NgDeviceId = *expectedNgId
 			if ngDeviceId != 0 && profile.NgDeviceId != ngDeviceId {
-				logging.Error("DATABASE", "NG device ID mismatch for profile", aurora.Cyan(profile.ProfileId), "- expected", aurora.Cyan(fmt.Sprintf("%08x", profile.NgDeviceId)), "but got", aurora.Cyan(fmt.Sprintf("%08x", ngDeviceId)))
+				logging.Error("DATABASE", "NG device ID mismatch for profile", aurora.Cyan(profile.ID), "- expected", aurora.Cyan(fmt.Sprintf("%08x", profile.NgDeviceId)), "but got", aurora.Cyan(fmt.Sprintf("%08x", ngDeviceId)))
 				return Profile{}, ErrDeviceIDMismatch
 			}
 		} else if ngDeviceId != 0 {
 			profile.NgDeviceId = ngDeviceId
-			_, err := c.pool.ExecContext(c.ctx, UpdateProfileNGDeviceID, profile.NgDeviceId, profile.ProfileId)
+			_, err := c.pool.ExecContext(c.ctx, UpdateProfileNGDeviceID, profile.NgDeviceId, profile.ID)
 			if err != nil {
 				return Profile{}, err
 			}
 		}
 
-		if profileId != 0 && profile.ProfileId != profileId {
+		if profileId != 0 && profile.ID != profileId {
 			err := c.UpdateProfileID(&profile, profileId)
 			if err != nil {
-				logging.Warn("DATABASE", "Could not update", aurora.Cyan(userId), aurora.Cyan(gsbrcd), "profile ID from", aurora.Cyan(profile.ProfileId), "to", aurora.Cyan(profileId))
+				logging.Warn("DATABASE", "Could not update", aurora.Cyan(userId), aurora.Cyan(gsbrcd), "profile ID from", aurora.Cyan(profile.ID), "to", aurora.Cyan(profileId))
 			} else {
-				logging.Notice("DATABASE", "Updated GPCM profile ID:", aurora.Cyan(userId), aurora.Cyan(gsbrcd), aurora.Cyan(profile.ProfileId))
+				logging.Notice("DATABASE", "Updated GPCM profile ID:", aurora.Cyan(userId), aurora.Cyan(gsbrcd), aurora.Cyan(profile.ID))
 			}
 		}
 
-		logging.Notice("DATABASE", "Log in GPCM profile:", aurora.Cyan(userId), aurora.Cyan(profile.GsbrCode), "-", aurora.Cyan(profile.ProfileId))
+		logging.Notice("DATABASE", "Log in GPCM profile:", aurora.Cyan(userId), aurora.Cyan(profile.GsbrCode), "-", aurora.Cyan(profile.ID))
 	}
 
 	// This should be set if the user already knows its own profile ID
@@ -104,7 +104,7 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 
 	// Update the user's last IP address and ingamesn
 	if deviceAuth {
-		_, err = c.pool.ExecContext(c.ctx, UpdateProfileLastIPAddress, ipAddress, ingamesn, profile.ProfileId)
+		_, err = c.pool.ExecContext(c.ctx, UpdateProfileLastIPAddress, ipAddress, ingamesn, profile.ID)
 		if err != nil {
 			return Profile{}, err
 		}
@@ -121,7 +121,7 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 	var bannedDeviceId uint32
 	var banReason string
 	timeNow := time.Now().UTC()
-	err = c.pool.QueryRowContext(c.ctx, SearchProfileBan, profile.NgDeviceId, profile.ProfileId, ipAddress, *lastIPAddress, timeNow).Scan(&banExists, &banTOS, &bannedDeviceId, &banReason)
+	err = c.pool.QueryRowContext(c.ctx, SearchProfileBan, profile.NgDeviceId, profile.ID, ipAddress, *lastIPAddress, timeNow).Scan(&banExists, &banTOS, &bannedDeviceId, &banReason)
 
 	if err != nil {
 		if err != sql.ErrNoRows {
@@ -133,11 +133,11 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 
 	if banExists {
 		if banTOS {
-			logging.Warn("DATABASE", "Profile", aurora.Cyan(profile.ProfileId), "is banned")
+			logging.Warn("DATABASE", "Profile", aurora.Cyan(profile.ID), "is banned")
 			return Profile{RestrictedDeviceId: bannedDeviceId, BanReason: banReason}, ErrProfileBannedTOS
 		}
 
-		logging.Warn("DATABASE", "Profile", aurora.Cyan(profile.ProfileId), "is restricted")
+		logging.Warn("DATABASE", "Profile", aurora.Cyan(profile.ID), "is restricted")
 		profile.Restricted = true
 		profile.RestrictedDeviceId = bannedDeviceId
 		profile.BanReason = banReason
@@ -148,7 +148,7 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 
 func (c *Connection) LoginUserToGameStats(userId uint64, gsbrcd string) (Profile, error) {
 	profile := Profile{
-		UserId:   userId,
+		UserID:   userId,
 		GsbrCode: gsbrcd,
 	}
 
@@ -157,7 +157,7 @@ func (c *Connection) LoginUserToGameStats(userId uint64, gsbrcd string) (Profile
 	var lastIPAddress *string
 	var allowDefaultKeys bool
 
-	err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ProfileId, &profile.NgDeviceId, &profile.Email, &profile.UniqueNick, &firstName, &lastName, &profile.OpenHost, &lastIPAddress, &allowDefaultKeys)
+	err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &profile.NgDeviceId, &profile.Email, &profile.UniqueNick, &firstName, &lastName, &profile.OpenHost, &lastIPAddress, &allowDefaultKeys)
 	if err != nil {
 		return Profile{}, err
 	}

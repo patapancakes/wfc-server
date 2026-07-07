@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS `sake_records` (
 
 -- Dumping structure for table wfc.profiles
 CREATE TABLE IF NOT EXISTS `profiles` (
-  `profile_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) unsigned NOT NULL,
   `gsbrcd` tinytext NOT NULL,
   `ng_device_id` int(10) unsigned DEFAULT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS `profiles` (
   `ban_tos` tinyint(1) DEFAULT NULL,
   `open_host` tinyint(1) DEFAULT 0,
   `allow_default_keys` tinyint(1) DEFAULT 0,
-  PRIMARY KEY (`profile_id`)
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1000000000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table wfc.profiles: ~0 rows (approximately)
