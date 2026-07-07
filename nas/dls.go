@@ -41,7 +41,7 @@ func handleDownloadEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authTokenObj := common.NASAuthToken{}
+	var authTokenObj common.NASAuthToken
 	err = authTokenObj.Unmarshal(string(authToken))
 	if err != nil {
 		logging.Error(moduleName, "Failed to unmarshal auth token:", err)

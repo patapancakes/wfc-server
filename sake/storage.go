@@ -191,7 +191,7 @@ func handleStorageRequest(w http.ResponseWriter, r *http.Request) {
 	logging.Info("SAKE", "Received storage request with SOAPAction:", aurora.Yellow(headerAction), "and body:", aurora.Cyan(string(body)))
 
 	// Parse the SOAP request XML
-	soap := StorageRequestEnvelope{}
+	var soap StorageRequestEnvelope
 	err = xml.Unmarshal(body, &soap)
 	if err != nil {
 		logging.Error(moduleName, "Received invalid XML")
@@ -250,7 +250,7 @@ func getRequestIdentity(moduleName string, request StorageRequestCommon) (uint32
 		return 0, common.GameInfo{}, ResultSecretKeyInvalid
 	}
 
-	loginTicket := common.GPCMLoginTicket{}
+	var loginTicket common.GPCMLoginTicket
 	if err := loginTicket.Unmarshal(request.LoginTicket); err != nil {
 		logging.Error(moduleName, err)
 		return 0, common.GameInfo{}, ResultLoginTicketInvalid
@@ -560,7 +560,7 @@ func getInputFields(moduleName string, request StorageRequestCommon, table *Sake
 func fillResponseValues(moduleName string, profileId uint32, table *SakeTable, records []database.SakeRecord, request StorageRequestCommon) (ArrayOfArrayOfRecordValue, Result) {
 	var response ArrayOfArrayOfRecordValue
 	for _, record := range records {
-		valueArray := ArrayOfRecordValue{}
+		var valueArray ArrayOfRecordValue
 		for _, field := range request.Fields.String {
 			if field == "ownerid" {
 				valueArray.RecordValues = append(valueArray.RecordValues, RecordValue{Value: CommonValue{

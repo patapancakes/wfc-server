@@ -115,7 +115,7 @@ func (c *Connection) UpdateProfile(profile *Profile, data map[string]string) {
 }
 
 func (c *Connection) GetProfile(profileId uint32) (Profile, bool) {
-	profile := Profile{}
+	var profile Profile
 	row := c.pool.QueryRowContext(c.ctx, GetProfile, profileId)
 	err := row.Scan(&profile.UserID, &profile.GsbrCode, &profile.FirstName, &profile.LastName, &profile.LastIPAddress, &profile.LastInGameSn)
 	if err != nil {
@@ -127,7 +127,7 @@ func (c *Connection) GetProfile(profileId uint32) (Profile, bool) {
 }
 
 func (c *Connection) ClearProfile(profileId uint32) (Profile, bool) {
-	profile := Profile{}
+	var profile Profile
 	row := c.pool.QueryRowContext(c.ctx, ClearProfileQuery, profileId)
 	err := row.Scan(&profile.UserID, &profile.GsbrCode, &profile.FirstName, &profile.LastName, &profile.LastIPAddress, &profile.LastInGameSn)
 

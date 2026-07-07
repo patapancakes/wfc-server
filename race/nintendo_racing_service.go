@@ -114,7 +114,7 @@ func handleNintendoRacingServiceRequest(w http.ResponseWriter, r *http.Request) 
 }
 
 func handleGetTopTenRankingsRequest(moduleName string, responseWriter http.ResponseWriter, requestBody []byte) {
-	requestXML := rankingsRequestEnvelope{}
+	var requestXML rankingsRequestEnvelope
 	err := xml.Unmarshal(requestBody, &requestXML)
 	if err != nil {
 		logging.Error(moduleName, "Got malformed XML")

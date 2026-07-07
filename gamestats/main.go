@@ -184,7 +184,7 @@ func HandlePacket(index uint64, data []byte) {
 	}
 
 	// Decrypt the data, can decrypt multiple packets
-	decrypted := strings.Builder{}
+	var decrypted strings.Builder
 	decrypted.Grow(length)
 	p := 0
 	for i := 0; i < length; i++ {

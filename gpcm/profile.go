@@ -20,8 +20,8 @@ func (g *GameSpySession) getProfile(command common.GameSpyCommand) {
 
 	logging.Info(g.ModuleName, "Looking up the profile of", aurora.Cyan(profileId).String())
 
-	profile := database.Profile{}
-	locstring := ""
+	var profile database.Profile
+	var locstring string
 
 	mutex.Lock()
 	if session, ok := sessions[uint32(profileId)]; ok && session.LoggedIn {

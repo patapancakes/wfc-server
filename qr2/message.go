@@ -245,13 +245,13 @@ func SendClientMessage(senderIP string, destSearchID uint64, message []byte) {
 		return
 	}
 
-	s := sleep.Sleeper{}
+	var s sleep.Sleeper
 	defer s.Done()
 
 	receiver.messageAckWaker.Clear()
 	s.AddWaker(receiver.messageAckWaker)
 
-	timeWaker := sleep.Waker{}
+	var timeWaker sleep.Waker
 	s.AddWaker(&timeWaker)
 
 	timeOutCount := 0

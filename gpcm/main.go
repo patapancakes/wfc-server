@@ -203,7 +203,7 @@ func HandlePacket(index uint64, data []byte) {
 		return
 	}
 
-	builder := strings.Builder{}
+	var builder strings.Builder
 	builder.Grow(length)
 
 	// Copy one rune at a time to enforce ASCII (rather than UTF-8)

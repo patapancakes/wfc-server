@@ -115,7 +115,7 @@ func backendMain(noSignal, noReload bool) {
 	reload, err := common.VerifyState(uuid)
 	common.ShouldNotError(err)
 
-	wg := &sync.WaitGroup{}
+	var wg sync.WaitGroup
 	actions := []func(bool){nas.StartServer, gpcm.StartServer, qr2.StartServer, gpsp.StartServer, serverbrowser.StartServer, race.StartServer, sake.StartServer, natneg.StartServer, api.StartServer, gamestats.StartServer}
 	wg.Add(len(actions))
 	for _, action := range actions {
@@ -234,7 +234,7 @@ func (r *RPCPacket) Shutdown(stateUuid string, _ *struct{}) error {
 		return nil
 	}
 
-	wg := &sync.WaitGroup{}
+	var wg sync.WaitGroup
 	actions := []func(){nas.Shutdown, gpcm.Shutdown, qr2.Shutdown, gpsp.Shutdown, serverbrowser.Shutdown, race.Shutdown, sake.Shutdown, natneg.Shutdown, api.Shutdown, gamestats.Shutdown}
 	wg.Add(len(actions))
 	for _, action := range actions {

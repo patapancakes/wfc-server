@@ -22,7 +22,7 @@ type BanRequestSpec struct {
 }
 
 func HandleBan(w http.ResponseWriter, r *http.Request) {
-	req := BanRequestSpec{}
+	var req BanRequestSpec
 	err := parsePost(r, w, &req, RoleModerator)
 	if err != nil {
 		return
