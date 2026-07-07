@@ -231,13 +231,7 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 }
 
 func (g *GameSpySession) performLoginWithDatabase(userId uint64, gsbrCode string, profileId uint32) bool {
-	// Get IP address without port
-	ipAddress := g.RemoteAddr
-	if strings.Contains(ipAddress, ":") {
-		ipAddress = ipAddress[:strings.Index(ipAddress, ":")]
-	}
-
-	profile, err := db.LoginUserToGPCM(userId, gsbrCode, profileId, ipAddress, g.InGameName)
+	profile, err := db.LoginUserToGPCM(userId, gsbrCode, profileId, strings.Split(g.RemoteAddr, ":")[0], g.InGameName)
 	g.Profile = profile
 
 	if err != nil {
