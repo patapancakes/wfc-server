@@ -103,9 +103,12 @@ func CreateGameSpyMessage(command GameSpyCommand) string {
 	query := ""
 	endQuery := ""
 	for k, v := range command.OtherValues {
-		if command.Command == "getpdr" && k == "data" {
+		switch {
+		case command.Command == "lc" && k == "id":
+			fallthrough
+		case command.Command == "getpdr" && k == "data":
 			endQuery += fmt.Sprintf(`\%s\%s`, k, v)
-		} else {
+		default:
 			query += fmt.Sprintf(`\%s\%s`, k, v)
 		}
 	}

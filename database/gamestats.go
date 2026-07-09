@@ -1,26 +1,62 @@
 package database
 
 import (
+	"database/sql"
+	"slices"
 	"time"
+	"wwfc/common"
 )
 
 const (
-	queryGsGetPublicData    = `SELECT modified_time, pdata FROM gamestats_public_data WHERE profile_id = ? AND dindex = ? AND ptype = ?`
-	queryGsInsertPublicData = `INSERT INTO gamestats_public_data (profile_id, dindex, ptype, pdata, modified_time) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) RETURNING modified_time`
-	queryGsUpdatePublicData = `UPDATE gamestats_public_data SET pdata = ?, modified_time = CURRENT_TIMESTAMP WHERE profile_id = ? AND dindex = ? AND ptype = ? RETURNING modified_time`
+	queryGsGetPersistData = `SELECT data, modified FROM gamestats_persistdata WHERE pid = ? AND dindex = ? AND ptype = ?`
+	queryGsSetPersistData = `INSERT INTO gamestats_persistdata (pid, ptype, dindex, data) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE data = VALUES(data), modified = UTC_TIMESTAMP RETURNING modified`
 )
 
-func (c *Connection) GetGameStatsPublicData(profileId uint32, dindex string, ptype string) (modifiedTime time.Time, publicData string, err error) {
-	err = c.pool.QueryRowContext(c.ctx, queryGsGetPublicData, profileId, dindex, ptype).Scan(&modifiedTime, &publicData)
+func (c *Connection) GetGameStatsPersistData(profileId uint32, ptype int, dindex int) (data string, modified time.Time, err error) {
+	err = c.pool.QueryRowContext(c.ctx, queryGsGetPersistData, profileId, ptype, dindex).Scan(&data, &modified)
 	return
 }
 
-func (c *Connection) CreateGameStatsPublicData(profileId uint32, dindex string, ptype string, publicData string) (modifiedTime time.Time, err error) {
-	err = c.pool.QueryRowContext(c.ctx, queryGsInsertPublicData, profileId, dindex, ptype, publicData).Scan(&modifiedTime)
+func (c *Connection) SetGameStatsPersistData(profileId uint32, ptype int, dindex int, data string) (modified time.Time, err error) {
+	err = c.pool.QueryRowContext(c.ctx, queryGsSetPersistData, profileId, ptype, dindex, data).Scan(&modified)
 	return
 }
 
-func (c *Connection) UpdateGameStatsPublicData(profileId uint32, dindex string, ptype string, publicData string) (modifiedTime time.Time, err error) {
-	err = c.pool.QueryRowContext(c.ctx, queryGsUpdatePublicData, publicData, profileId, dindex, ptype).Scan(&modifiedTime)
+func (c *Connection) GetGameStatsPersistDataKV(profileId uint32, ptype int, dindex int, keys []string) (kv common.KeyValues, modified time.Time, err error) {
+	var data string
+	data, modified, err = c.GetGameStatsPersistData(profileId, ptype, dindex)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return
+		}
+
+		err = nil
+	}
+
+	if keys != nil {
+		kv = slices.DeleteFunc(common.KeyValuesFromString(data), func(kv common.KV) bool {
+			return !slices.Contains(keys, kv.K)
+		})
+	}
+
+	return
+}
+
+func (c *Connection) SetGameStatsPersistDataKV(profileId uint32, ptype int, dindex int, kvs common.KeyValues) (modified time.Time, err error) {
+	var data common.KeyValues
+	data, modified, err = c.GetGameStatsPersistDataKV(profileId, ptype, dindex, nil)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return
+		}
+
+		err = nil
+	}
+
+	for _, kv := range kvs {
+		data.Set(kv.K, kv.V)
+	}
+
+	modified, err = c.SetGameStatsPersistData(profileId, ptype, dindex, data.Encode())
 	return
 }

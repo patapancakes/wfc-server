@@ -1,7 +1,6 @@
 package gamestats
 
 import (
-	"database/sql"
 	"strconv"
 	"strings"
 	"time"
@@ -26,7 +25,7 @@ func (g *GameStatsSession) setpd(command common.GameSpyCommand) {
 
 	errMsg := common.GameSpyCommand{
 		Command:      "setpdr",
-		CommandValue: "1",
+		CommandValue: "0",
 		OtherValues: map[string]string{
 			"pid": command.OtherValues["pid"],
 			"lid": strconv.Itoa(g.LoginID),
@@ -39,23 +38,23 @@ func (g *GameStatsSession) setpd(command common.GameSpyCommand) {
 		return
 	}
 
-	dindex, ok := command.OtherValues["dindex"]
-	if !ok {
-		logging.Error(g.ModuleName, "Missing dindex")
+	ptype, err := strconv.Atoi(command.OtherValues["ptype"])
+	if err != nil || ptype > 3 || (ptype != PublicReadWrite && ptype != PrivateReadWrite) {
+		logging.Error(g.ModuleName, "Invalid ptype:", aurora.Cyan(ptype))
 		logging.Error(g.ModuleName, "Full command:", command)
 		g.Write(errMsg)
 		return
 	}
 
-	ptype, ok := command.OtherValues["ptype"]
-	if !ok {
-		logging.Error(g.ModuleName, "Missing ptype")
+	dindex, err := strconv.Atoi(command.OtherValues["dindex"])
+	if err != nil {
+		logging.Error(g.ModuleName, "Invalid dindex:", aurora.Cyan(dindex))
 		logging.Error(g.ModuleName, "Full command:", command)
 		g.Write(errMsg)
 		return
 	}
 
-	newData, ok := command.OtherValues["data"]
+	dataStr, ok := command.OtherValues["data"]
 	if !ok {
 		logging.Error(g.ModuleName, "Missing data")
 		logging.Error(g.ModuleName, "Full command:", command)
@@ -63,41 +62,27 @@ func (g *GameStatsSession) setpd(command common.GameSpyCommand) {
 		return
 	}
 
-	logging.Info(g.ModuleName, "Set public data: PID:", aurora.Cyan(g.Profile.ID), "Index:", aurora.Cyan(dindex), "Type:", aurora.Cyan(ptype), "Data:", aurora.Cyan(newData))
+	logging.Info(g.ModuleName, "Set persist data: PID:", aurora.Cyan(g.Profile.ID), "Type:", aurora.Cyan(ptype), "Index:", aurora.Cyan(dindex), "Data:", aurora.Cyan(dataStr))
 
 	// Trim extra null byte at the end
-	if len(newData) > 0 && newData[len(newData)-1] == 0 {
-		newData = newData[:len(newData)-1]
-	}
+	dataStr = strings.TrimSuffix(dataStr, "\x00")
 
-	if strings.ContainsRune(newData, 0) {
+	if strings.ContainsRune(dataStr, 0) {
 		logging.Error(g.ModuleName, "Data contains null byte")
 		g.Write(errMsg)
 		return
 	}
 
 	var modifiedTime time.Time
-	_, _, err := db.GetGameStatsPublicData(g.Profile.ID, dindex, ptype)
-	if err != nil {
-		if err != sql.ErrNoRows {
-			logging.Error(g.ModuleName, "GetGameStatsPublicData returned", err)
-			g.Write(errMsg)
-			return
-		}
-
-		modifiedTime, err = db.CreateGameStatsPublicData(g.Profile.ID, dindex, ptype, newData)
-		if err != nil {
-			logging.Error(g.ModuleName, "GetGameStatsPublicData returned", err)
-			g.Write(errMsg)
-			return
-		}
+	if command.OtherValues["kv"] == "1" {
+		modifiedTime, err = db.SetGameStatsPersistDataKV(g.Profile.ID, ptype, dindex, common.KeyValuesFromString(dataStr))
 	} else {
-		modifiedTime, err = db.UpdateGameStatsPublicData(g.Profile.ID, dindex, ptype, newData)
-		if err != nil {
-			logging.Error(g.ModuleName, "UpdateGameStatsPublicData returned", err)
-			g.Write(errMsg)
-			return
-		}
+		modifiedTime, err = db.SetGameStatsPersistData(g.Profile.ID, ptype, dindex, dataStr)
+	}
+	if err != nil {
+		logging.Error(g.ModuleName, "SetGameStatsPersistData returned", err)
+		g.Write(errMsg)
+		return
 	}
 
 	// TODO: Is mod supposed to be the last modified time or new modified time?

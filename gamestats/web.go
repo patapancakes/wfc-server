@@ -20,19 +20,7 @@ func HandleWebRequest(w http.ResponseWriter, r *http.Request) {
 	logging.Info("GSTATS", aurora.Yellow(r.Method), aurora.Cyan(r.URL), "via", aurora.Cyan(r.Host), "from", aurora.BrightCyan(r.RemoteAddr))
 	moduleName := "GSTATS:" + r.RemoteAddr
 
-	u, err := url.Parse(r.URL.String())
-	if err != nil {
-		replyHTTPError(w, http.StatusBadRequest, "400 Bad Request")
-		return
-	}
-
-	query, err := url.ParseQuery(u.RawQuery)
-	if err != nil {
-		replyHTTPError(w, http.StatusBadRequest, "400 Bad Request")
-		return
-	}
-
-	path := u.Path
+	path := r.URL.Path
 	path = strings.TrimPrefix(path, "/")
 
 	gameName := path
@@ -51,7 +39,7 @@ func HandleWebRequest(w http.ResponseWriter, r *http.Request) {
 
 	var response []byte
 
-	hash := query.Get("hash")
+	hash := r.FormValue("hash")
 	token := calculateToken(r.URL, r.Host)
 
 	if hash == "" {
@@ -70,7 +58,7 @@ func HandleWebRequest(w http.ResponseWriter, r *http.Request) {
 
 		switch subPath {
 		case "/web/client/get2.asp":
-			response = handleGet2(game, query)
+			response = handleGet2(game, r.Form)
 
 		default:
 			logging.Warn(moduleName, "Unhandled path:", aurora.Cyan(subPath))
@@ -95,7 +83,7 @@ func HandleWebRequest(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Powered-By", "ASP.NET")
 	w.Header().Set("Content-Length", strconv.Itoa(len(response)))
 	w.WriteHeader(200)
-	_, err = w.Write(response)
+	_, err := w.Write(response)
 	if err != nil {
 		logging.Error("GSTATS", "Error writing response:", err)
 	}

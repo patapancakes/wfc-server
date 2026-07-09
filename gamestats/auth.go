@@ -1,6 +1,8 @@
 package gamestats
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"math/rand"
 	"strconv"
 	"wwfc/common"
@@ -17,7 +19,21 @@ func (g *GameStatsSession) auth(command common.GameSpyCommand) {
 		return
 	}
 
-	// TODO: Validate "response"
+	var num int32
+	for _, b := range []byte(g.Challenge) {
+		num = num*-1664117991 + int32(b)
+	}
+
+	hash := md5.New()
+	hash.Write([]byte(strconv.Itoa(int(num))))
+	hash.Write([]byte(game.SecretKey))
+
+	response := command.OtherValues["response"]
+	if response != hex.EncodeToString(hash.Sum(nil)) {
+		g.replyError(gpcm.ErrLoginBadPreAuth)
+		return
+	}
+
 	g.SessionKey = rand.Int31n(290000000) + 10000000
 	g.GameName = command.OtherValues["gamename"]
 	g.gameInfo = game

@@ -43,6 +43,13 @@ var (
 	mutex               = deadlock.RWMutex{}
 )
 
+const (
+	PrivateRead = iota
+	PrivateReadWrite
+	PublicRead
+	PublicReadWrite
+)
+
 func StartServer(reload bool) {
 	// Get config
 	config := common.GetConfig()
