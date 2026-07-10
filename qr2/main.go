@@ -3,6 +3,7 @@ package qr2
 import (
 	"encoding/binary"
 	"net"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -107,7 +108,7 @@ func StartServer(reload bool) {
 
 			waitGroup.Add(1)
 
-			go handleConnection(conn, *addr.(*net.UDPAddr), buf)
+			go handleConnection(conn, *addr.(*net.UDPAddr), buf[:n])
 		}
 	}()
 }
@@ -174,7 +175,26 @@ func handleConnection(conn net.PacketConn, addr net.UDPAddr, buffer []byte) {
 
 		mutex.Lock()
 		if session.Challenge != "" {
-			// TODO: Verify the challenge
+			game := common.GetGameInfoByName(session.Data["gamename"])
+			if game == nil {
+				mutex.Unlock()
+				logging.Error(moduleName, "Unknown game:", aurora.Cyan(session.Data["gamename"]))
+				return
+			}
+
+			if len(buffer) < 5 {
+				mutex.Unlock()
+				logging.Error(moduleName, "Invalid packet size")
+				return
+			}
+
+			challenge := strings.TrimSuffix(string(buffer[5:]), "\x00")
+			if challenge != encode(encrypt([]byte(game.SecretKey), []byte(session.Challenge))) {
+				mutex.Unlock()
+				logging.Error(moduleName, "Invalid challenge")
+				return
+			}
+
 			session.Authenticated = true
 			mutex.Unlock()
 
