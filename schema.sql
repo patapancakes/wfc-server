@@ -26,32 +26,32 @@ CREATE TABLE IF NOT EXISTS `events` (
   `event_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`event_data`)),
   `event_time` timestamp NOT NULL DEFAULT utc_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=710 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1311 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Data exporting was unselected.
 
--- Dumping structure for table wfc.gamestats_public_data
-CREATE TABLE IF NOT EXISTS `gamestats_public_data` (
-  `profile_id` int(10) unsigned NOT NULL,
-  `dindex` tinytext NOT NULL,
-  `ptype` tinytext NOT NULL,
-  `pdata` text NOT NULL,
-  `modified_time` timestamp NOT NULL,
-  KEY `one_pdata_constraint` (`profile_id`,`dindex`(255),`ptype`(255)) USING BTREE,
-  CONSTRAINT `FK_gamestats_public_data_profiles` FOREIGN KEY (`profile_id`) REFERENCES `profiles` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+-- Dumping structure for table wfc.gamestats_persistdata
+CREATE TABLE IF NOT EXISTS `gamestats_persistdata` (
+  `pid` int(10) unsigned NOT NULL,
+  `ptype` tinyint(3) unsigned NOT NULL,
+  `dindex` int(10) unsigned NOT NULL,
+  `data` text NOT NULL,
+  `modified` timestamp NOT NULL DEFAULT utc_timestamp(),
+  UNIQUE KEY `one_pdata_constraint` (`pid`,`ptype`,`dindex`) USING BTREE,
+  CONSTRAINT `FK_gamestats_persistent_data_profiles` FOREIGN KEY (`pid`) REFERENCES `profiles` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Data exporting was unselected.
 
 -- Dumping structure for table wfc.mario_kart_wii_sake
 CREATE TABLE IF NOT EXISTS `mario_kart_wii_sake` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `regionid` smallint(5) unsigned NOT NULL,
   `courseid` smallint(5) unsigned NOT NULL,
   `score` int(10) unsigned NOT NULL,
   `pid` int(10) unsigned NOT NULL,
   `playerinfo` varchar(108) NOT NULL,
   `ghost` longblob DEFAULT NULL,
-  `id` int(11) NOT NULL AUTO_INCREMENT,
   `upload_time` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `one_time_per_course_constraint` (`courseid`,`pid`),
@@ -70,10 +70,10 @@ CREATE TABLE IF NOT EXISTS `mario_kart_wii_sake` (
 CREATE TABLE IF NOT EXISTS `profiles` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) unsigned NOT NULL,
-  `gsbrcd` tinytext NOT NULL,
-  `firstname` tinytext DEFAULT NULL,
-  `lastname` tinytext DEFAULT '',
-  `last_ip_address` tinytext DEFAULT '',
+  `gsbrcd` tinytext CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
+  `firstname` tinytext CHARACTER SET ascii COLLATE ascii_general_ci DEFAULT NULL,
+  `lastname` tinytext CHARACTER SET ascii COLLATE ascii_general_ci DEFAULT '',
+  `last_ip_address` tinytext CHARACTER SET ascii COLLATE ascii_general_ci DEFAULT '',
   `last_ingamesn` tinytext DEFAULT '',
   `has_ban` tinyint(1) DEFAULT 0,
   `ban_issued` timestamp NULL DEFAULT NULL,
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS `profiles` (
   PRIMARY KEY (`id`) USING BTREE,
   KEY `user_id` (`user_id`),
   CONSTRAINT `FK_profiles_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=1000000000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1000000007 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Data exporting was unselected.
 
@@ -110,9 +110,9 @@ CREATE TABLE IF NOT EXISTS `sake_records` (
 CREATE TABLE IF NOT EXISTS `users` (
   `id` bigint(20) unsigned NOT NULL,
   `unitcd` tinyint(1) unsigned NOT NULL,
-  `macadr` char(12) NOT NULL,
+  `macadr` char(12) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
   `passwd` smallint(6) DEFAULT NULL COMMENT 'ds only',
-  `csnum` char(11) DEFAULT NULL COMMENT 'wii only',
+  `csnum` char(11) CHARACTER SET ascii COLLATE ascii_general_ci DEFAULT NULL COMMENT 'wii only',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `macadr` (`macadr`),
   UNIQUE KEY `csnum` (`csnum`)
