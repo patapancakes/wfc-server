@@ -51,7 +51,7 @@ type NASAuthToken struct {
 	Lang              byte
 	UnitCode          byte
 	GameCode          [4]byte
-	GsbrCode          [16]byte
+	GsbrCode          [11]byte
 	Challenge         [8]byte
 	InGameScreenName  [64]byte
 	Magic             [8]byte

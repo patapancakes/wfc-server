@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `mario_kart_wii_sake` (
 CREATE TABLE IF NOT EXISTS `profiles` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) unsigned NOT NULL,
-  `gsbrcd` tinytext CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
+  `gsbrcd` char(11) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
   `firstname` tinytext CHARACTER SET ascii COLLATE ascii_general_ci DEFAULT NULL,
   `lastname` tinytext CHARACTER SET ascii COLLATE ascii_general_ci DEFAULT '',
   `last_ip_address` tinytext CHARACTER SET ascii COLLATE ascii_general_ci DEFAULT '',
