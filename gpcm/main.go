@@ -116,7 +116,7 @@ func CloseConnection(index uint64) {
 	if session.LoggedIn {
 		qr2.Logout(session.Profile.ID)
 		if session.QR2IP != 0 {
-			qr2.ProcessGPStatusUpdate(session.Profile.ID, session.QR2IP, "0")
+			qr2.ProcessGPStatusUpdate(session.Profile.ID, session.QR2IP, common.Offline)
 		}
 		session.sendLogoutStatus()
 

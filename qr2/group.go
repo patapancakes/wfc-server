@@ -211,7 +211,7 @@ func ProcessGPTellAddr(senderPid uint32, senderIP uint64, destPid uint32, destIP
 	processTellAddr(moduleName, from, to)
 }
 
-func ProcessGPStatusUpdate(profileID uint32, senderIP uint64, status string) {
+func ProcessGPStatusUpdate(profileID uint32, senderIP uint64, status int) {
 	moduleName := "QR2/GPStatus:" + strconv.FormatUint(uint64(profileID), 10)
 
 	mutex.Lock()
@@ -242,7 +242,7 @@ func ProcessGPStatusUpdate(profileID uint32, senderIP uint64, status string) {
 		}
 	}
 
-	if status == "0" || status == "1" || status == "3" || status == "4" {
+	if status == common.Offline || status == common.Online || status == common.MatchAnybody || status == common.MatchFriend {
 		session := sessions[senderIP]
 		if session == nil || session.groupPointer == nil {
 			return

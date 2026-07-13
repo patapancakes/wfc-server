@@ -213,7 +213,13 @@ func (g *GameSpySession) authAddFriend(command common.GameSpyCommand) {
 }
 
 func (g *GameSpySession) setStatus(command common.GameSpyCommand) {
-	status := command.CommandValue
+	status, err := strconv.Atoi(command.CommandValue)
+	if err != nil {
+		logging.Error(g.ModuleName, "Invalid status value")
+		g.replyError(ErrStatus)
+		return
+	}
+
 	logging.Notice(g.ModuleName, "New status:", aurora.BrightMagenta(status))
 
 	qr2.ProcessGPStatusUpdate(g.Profile.ID, g.QR2IP, status)
@@ -230,12 +236,12 @@ func (g *GameSpySession) setStatus(command common.GameSpyCommand) {
 		locstring = ""
 	}
 
-	statusMsg := "|s|" + status + "|ss|" + statstring + "|ls|" + locstring + "|ip|0|p|0|qm|0"
+	statusMsg := "|s|" + strconv.Itoa(status) + "|ss|" + statstring + "|ls|" + locstring + "|ip|0|p|0|qm|0"
 
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	if status == "3" && g.Profile.Restricted {
+	if status == common.MatchAnybody && g.Profile.Restricted {
 		logging.Warn(g.ModuleName, "Restricted profile searching for public rooms")
 		kickPlayer(g.Profile.ID, "restricted_join")
 	}
