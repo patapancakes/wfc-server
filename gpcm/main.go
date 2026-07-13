@@ -36,7 +36,6 @@ type GameSpySession struct {
 	HostPlatform      string
 	UnitCode          byte
 
-	StatusSet      bool
 	Status         string
 	LocString      string
 	FriendList     []uint32
@@ -143,7 +142,6 @@ func NewConnection(index uint64, address string) {
 		ModuleName:     "GPCM:" + address,
 		LoggedIn:       false,
 		Challenge:      common.RandomString(10),
-		StatusSet:      false,
 		Status:         "",
 		LocString:      "",
 		FriendList:     []uint32{},

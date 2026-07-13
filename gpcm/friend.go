@@ -227,8 +227,6 @@ func (g *GameSpySession) setStatus(command common.GameSpyCommand) {
 	g.LocString = locstring
 	g.Status = statusMsg
 
-	g.StatusSet = true
-
 	for _, storedPid := range g.AuthFriendList {
 		g.sendFriendStatus(storedPid)
 	}
