@@ -68,7 +68,7 @@ func (g *GameSpySession) getAuthorizedFriendIndex(profileId uint32) int {
 }
 
 const (
-	// addFriendMessage = "\r\n\r\n|signed|00000000000000000000000000000000"
+	addFriendMessage = "\r\n\r\n|signed|00000000000000000000000000000000"
 
 	// Message used by DS games and some Wii games
 	bm1AuthMessage = "I have authorized your request to add me to your list"
@@ -130,6 +130,7 @@ func (g *GameSpySession) addFriend(command common.GameSpyCommand) {
 	if !newSession.isFriendAdded(g.Profile.ID) {
 		// Not an error, just ignore for now
 		logging.Info(g.ModuleName, "Destination has not added sender")
+		sendMessageToSessionBuffer(BuddyRequest, g.Profile.ID, newSession, addFriendMessage)
 		return
 	}
 
