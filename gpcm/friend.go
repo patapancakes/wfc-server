@@ -1,6 +1,7 @@
 package gpcm
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 	"wwfc/common"
@@ -25,12 +26,7 @@ func removeFromUint32Array(arrayPointer *[]uint32, index int) {
 }
 
 func (g *GameSpySession) isFriendAdded(profileId uint32) bool {
-	for _, storedPid := range g.FriendList {
-		if storedPid == profileId {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(g.FriendList, profileId)
 }
 
 func (g *GameSpySession) getFriendIndex(profileId uint32) int {
@@ -43,12 +39,7 @@ func (g *GameSpySession) getFriendIndex(profileId uint32) int {
 }
 
 func (g *GameSpySession) isFriendAuthorized(profileId uint32) bool {
-	for _, storedPid := range g.AuthFriendList {
-		if storedPid == profileId {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(g.AuthFriendList, profileId)
 }
 
 func (g *GameSpySession) getAuthorizedFriendIndex(profileId uint32) int {
@@ -323,10 +314,8 @@ func (g *GameSpySession) exchangeFriendStatus(profileId uint32) {
 }
 
 func (g *GameSpySession) recordStatusSent(sender uint32) {
-	for _, friend := range g.RecvStatusFromList {
-		if friend == sender {
-			return
-		}
+	if slices.Contains(g.RecvStatusFromList, sender) {
+		return
 	}
 
 	g.RecvStatusFromList = append(g.RecvStatusFromList, sender)

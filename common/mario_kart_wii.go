@@ -230,7 +230,7 @@ func (rkgd RKGhostData) GetBits(byteOffset int, bitOffset int, bitLength int) ui
 	byteCount := (bitLength + bitIndex + 7) / 8
 
 	var value uint32
-	for i := 0; i < byteCount; i++ {
+	for i := range byteCount {
 		value |= uint32(rkgd[byteIndex+i]) << uint32((byteCount-i-1)*8)
 	}
 
@@ -516,7 +516,7 @@ func VerifyYaz1Data(moduleName string, szsData []byte, expectedDecompSize int, d
 			continue
 		}
 
-		for j := 0; j < 8; j++ {
+		for range 8 {
 			if flags&0x80 == 0 {
 				if i+1 >= len(szsData) {
 					logging.Error(moduleName, "Yaz1: Unexpected end of data")

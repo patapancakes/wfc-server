@@ -187,7 +187,7 @@ func (c *Connection) InsertSakeRecord(record SakeRecord) (recordId int32, err er
 		return 0, err
 	}
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		err = c.pool.QueryRowContext(c.ctx, insertSakeRecordQuery, record.GameId, record.TableId, record.OwnerId, fieldsJson).Scan(&recordId)
 		if err == nil {
 			break

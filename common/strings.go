@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"math/rand"
+	"slices"
 	"unicode/utf16"
 )
 
@@ -38,13 +39,13 @@ func UTF16ToByteArray(wideString []uint16) []byte {
 }
 
 func GetString(buf []byte) (string, error) {
-	nullTerminator := bytes.IndexByte(buf, 0)
+	before, _, ok := bytes.Cut(buf, []byte{0})
 
-	if nullTerminator == -1 {
+	if !ok {
 		return "", errors.New("buf is not null-terminated")
 	}
 
-	return string(buf[:nullTerminator]), nil
+	return string(before), nil
 }
 
 func GetWideString(buf []byte, byteOrder binary.ByteOrder) (string, error) {
@@ -67,7 +68,7 @@ func IsUppercaseAlphanumeric(str string) bool {
 		return false
 	}
 
-	for i := 0; i < strLength; i++ {
+	for i := range strLength {
 		c := str[i]
 
 		if (c < '0' || c > '9') && (c < 'A' || c > 'Z') {
@@ -79,10 +80,5 @@ func IsUppercaseAlphanumeric(str string) bool {
 }
 
 func StringInSlice(str string, slice []string) bool {
-	for _, s := range slice {
-		if s == str {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(slice, str)
 }

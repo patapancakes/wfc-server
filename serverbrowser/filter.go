@@ -1,6 +1,7 @@
 package serverbrowser
 
 import (
+	"maps"
 	"wwfc/filter"
 	"wwfc/logging"
 
@@ -73,9 +74,7 @@ func filterSelfLookup(moduleName string, servers []map[string]string, queryGame 
 		if _, ok := server["dwc_pid"]; !ok && server["publicip"] == publicIP {
 			// Create a copy of the map with some values changed
 			newServer := map[string]string{}
-			for k, v := range server {
-				newServer[k] = v
-			}
+			maps.Copy(newServer, server)
 			newServer["dwc_pid"] = dwcPid
 			newServer["dwc_mtype"] = "0"
 			newServer["dwc_mver"] = "0"

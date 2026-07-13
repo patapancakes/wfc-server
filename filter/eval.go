@@ -198,7 +198,7 @@ func (e *expression) evalAnd(args []*TreeNode) int64 {
 		panic("operator missing arguments")
 	}
 
-	for i := 0; i < cnt; i++ {
+	for i := range cnt {
 		if e.getString(args[i]) == "0" {
 			return 0
 		}
@@ -212,7 +212,7 @@ func (e *expression) evalOr(args []*TreeNode) int64 {
 		panic("operator missing arguments")
 	}
 
-	for i := 0; i < cnt; i++ {
+	for i := range cnt {
 		if e.getString(args[i]) != "0" {
 			return 1
 		}
@@ -339,7 +339,8 @@ func (e *expression) evalLikeSingle(arg1, arg2 *TreeNode) int64 {
 
 	allowedCharacters := `abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_%\`
 
-	regexString := "^"
+	var regexString strings.Builder
+	regexString.WriteString("^")
 
 	// Convert SQL LIKE pattern to regex
 	for i, c := range val2 {
@@ -349,32 +350,32 @@ func (e *expression) evalLikeSingle(arg1, arg2 *TreeNode) int64 {
 
 		if i != 0 && val2[i-1] == '\\' {
 			if c == '\\' {
-				regexString += "\\\\"
+				regexString.WriteString("\\\\")
 				continue
 			}
 
-			regexString += string(c)
+			regexString.WriteString(string(c))
 			continue
 		}
 
 		switch c {
 		case '%':
-			regexString += ".*"
+			regexString.WriteString(".*")
 
 		case '_':
-			regexString += "."
+			regexString.WriteString(".")
 
 		case '\\':
 			// Do nothing
 
 		default:
-			regexString += string(c)
+			regexString.WriteString(string(c))
 		}
 	}
 
-	regexString += "$"
+	regexString.WriteString("$")
 
-	if matched, err := regexp.MatchString(regexString, val1); err != nil {
+	if matched, err := regexp.MatchString(regexString.String(), val1); err != nil {
 		panic(err)
 	} else if matched {
 		return 1

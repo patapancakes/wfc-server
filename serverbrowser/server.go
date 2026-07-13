@@ -128,7 +128,7 @@ func handleServerListRequest(moduleName string, connIndex uint64, address string
 	}
 
 	var output []byte
-	for _, s := range strings.Split(strings.Split(address, ":")[0], ".") {
+	for s := range strings.SplitSeq(strings.Split(address, ":")[0], ".") {
 		val, err := strconv.Atoi(s)
 		if err != nil {
 			panic(err)
@@ -139,7 +139,7 @@ func handleServerListRequest(moduleName string, connIndex uint64, address string
 
 	var fieldList []string
 	if options&NoServerListOption == 0 {
-		for _, field := range strings.Split(fields, "\\") {
+		for field := range strings.SplitSeq(fields, "\\") {
 			if len(field) == 0 || field == " " {
 				continue
 			}

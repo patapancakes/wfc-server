@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/logrusorgru/aurora/v3"
@@ -52,13 +53,13 @@ func Notice(module string, arguments ...any) {
 		return
 	}
 
-	var finalStr string
+	var finalStr strings.Builder
 	for _, argument := range arguments {
-		finalStr += fmt.Sprint(argument)
-		finalStr += " "
+		finalStr.WriteString(fmt.Sprint(argument))
+		finalStr.WriteString(" ")
 	}
 
-	log.Printf(aurora.BrightGreen("N[%s]").String()+": %s", module, finalStr)
+	log.Printf(aurora.BrightGreen("N[%s]").String()+": %s", module, finalStr.String())
 }
 
 func Error(module string, arguments ...any) {
@@ -66,13 +67,13 @@ func Error(module string, arguments ...any) {
 		return
 	}
 
-	var finalStr string
+	var finalStr strings.Builder
 	for _, argument := range arguments {
-		finalStr += fmt.Sprint(argument)
-		finalStr += " "
+		finalStr.WriteString(fmt.Sprint(argument))
+		finalStr.WriteString(" ")
 	}
 
-	log.Printf(aurora.BrightRed("E[%s]").String()+": %s", module, finalStr)
+	log.Printf(aurora.BrightRed("E[%s]").String()+": %s", module, finalStr.String())
 }
 
 func Warn(module string, arguments ...any) {
@@ -80,13 +81,13 @@ func Warn(module string, arguments ...any) {
 		return
 	}
 
-	var finalStr string
+	var finalStr strings.Builder
 	for _, argument := range arguments {
-		finalStr += fmt.Sprint(argument)
-		finalStr += " "
+		finalStr.WriteString(fmt.Sprint(argument))
+		finalStr.WriteString(" ")
 	}
 
-	log.Printf(aurora.BrightYellow("W[%s]").String()+": %s", module, finalStr)
+	log.Printf(aurora.BrightYellow("W[%s]").String()+": %s", module, finalStr.String())
 }
 
 func Info(module string, arguments ...any) {
@@ -94,11 +95,11 @@ func Info(module string, arguments ...any) {
 		return
 	}
 
-	var finalStr string
+	var finalStr strings.Builder
 	for _, argument := range arguments {
-		finalStr += fmt.Sprint(argument)
-		finalStr += " "
+		finalStr.WriteString(fmt.Sprint(argument))
+		finalStr.WriteString(" ")
 	}
 
-	log.Printf(aurora.BrightCyan("I[%s]").String()+": %s", module, finalStr)
+	log.Printf(aurora.BrightCyan("I[%s]").String()+": %s", module, finalStr.String())
 }

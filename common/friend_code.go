@@ -16,10 +16,10 @@ var crc8Table = func() [256]byte {
 	var table [256]byte
 	poly := byte(0x07)
 
-	for i := 0; i < 256; i++ {
+	for i := range 256 {
 		crc := byte(i)
 
-		for j := 0; j < 8; j++ {
+		for range 8 {
 			if crc&0x80 != 0 {
 				crc = (crc << 1) ^ poly
 			} else {

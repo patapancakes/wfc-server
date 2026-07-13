@@ -16,15 +16,15 @@ import (
 )
 
 func printHex(data []byte) string {
-	logMsg := ""
-	for i := 0; i < len(data); i++ {
+	var logMsg strings.Builder
+	for i := range data {
 		if (i % 32) == 0 {
-			logMsg += "\n"
+			logMsg.WriteString("\n")
 		}
-		logMsg += fmt.Sprintf("%02x ", data[i])
+		logMsg.WriteString(fmt.Sprintf("%02x ", data[i]))
 	}
 
-	return logMsg
+	return logMsg.String()
 }
 
 func SendClientMessage(senderIP string, destSearchID uint64, message []byte) {

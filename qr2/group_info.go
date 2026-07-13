@@ -1,6 +1,7 @@
 package qr2
 
 import (
+	"maps"
 	"sort"
 	"strconv"
 	"time"
@@ -104,9 +105,7 @@ func getGroupsRaw(gameNames []string, groupNames []string) []GroupInfo {
 
 		for session := range group.players {
 			mapData := map[string]string{}
-			for k, v := range session.Data {
-				mapData[k] = v
-			}
+			maps.Copy(mapData, session.Data)
 
 			if login := session.login; login != nil {
 				mapData["+ingamesn"] = login.InGameName
@@ -175,7 +174,7 @@ func GetGroups(gameNames []string, groupNames []string, sorted bool) []GroupInfo
 				playerInfo.BattleELO = rawPlayer["eb"]
 			}
 
-			for i := 0; i < 32; i++ {
+			for i := range 32 {
 				miiData := rawPlayer["+mii"+strconv.Itoa(i)]
 				if miiData == "" {
 					continue

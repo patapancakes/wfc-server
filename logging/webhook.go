@@ -27,7 +27,7 @@ type webhookAuthor struct {
 }
 
 type webhookEmbed struct {
-	Author      webhookAuthor `json:"author,omitempty"`
+	Author      webhookAuthor `json:"author"`
 	Title       string        `json:"title,omitempty"`
 	Description string        `json:"description,omitempty"`
 }

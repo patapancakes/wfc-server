@@ -1,8 +1,6 @@
 module wwfc
 
-go 1.24.0
-
-toolchain go1.24.2
+go 1.26.4
 
 require (
 	github.com/bombsimon/mysql-error-numbers/v3 v3.0.0

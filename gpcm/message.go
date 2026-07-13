@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"wwfc/common"
@@ -92,7 +93,7 @@ func (g *GameSpySession) bestieMessage(command common.GameSpyCommand) {
 			break
 		}
 
-		for _, stringValue := range strings.Split(msg[msgDataIndex:], "/") {
+		for stringValue := range strings.SplitSeq(msg[msgDataIndex:], "/") {
 			intValue, err := strconv.ParseUint(stringValue, 10, 32)
 			if err != nil {
 				logging.Error(g.ModuleName, "Invalid message value; message:", msg)
@@ -108,7 +109,7 @@ func (g *GameSpySession) bestieMessage(command common.GameSpyCommand) {
 			break
 		}
 
-		for _, stringValue := range strings.Split(msg[msgDataIndex:], "/") {
+		for stringValue := range strings.SplitSeq(msg[msgDataIndex:], "/") {
 			byteValue, err := hex.DecodeString(stringValue)
 			if err != nil || len(byteValue) != 4 {
 				logging.Error(g.ModuleName, "Invalid message value; message:", msg)
@@ -243,12 +244,10 @@ func (g *GameSpySession) bestieMessage(command common.GameSpyCommand) {
 	}
 
 	// Check if this session is on the destination's RecvStatusFromList
-	for _, friend := range toSession.RecvStatusFromList {
-		if friend == g.Profile.ID {
-			// The destination has already received a status message from the sender, so we can just send the message
-			sendMessageToSession("1", g.Profile.ID, toSession, newMsgStr)
-			return
-		}
+	if slices.Contains(toSession.RecvStatusFromList, g.Profile.ID) {
+		// The destination has already received a status message from the sender, so we can just send the message
+		sendMessageToSession("1", g.Profile.ID, toSession, newMsgStr)
+		return
 	}
 
 	// Send a dummy status message so the destination will accept a message from the sender

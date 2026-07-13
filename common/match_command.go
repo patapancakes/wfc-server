@@ -300,7 +300,7 @@ func DecodeMatchCommand(command byte, buffer []byte, version int) (MatchCommandD
 			}
 
 			var profileIDs []uint32
-			for i := uint32(0); i < clientCount; i++ {
+			for i := range clientCount {
 				profileIDs = append(profileIDs, binary.LittleEndian.Uint32(buffer[0x04+i*4:0x04+i*4+4]))
 			}
 
@@ -473,7 +473,7 @@ func DecodeMatchCommand(command byte, buffer []byte, version int) (MatchCommandD
 
 		pidCount := len(buffer) >> 2
 		var pids []uint32
-		for i := 0; i < pidCount; i++ {
+		for i := range pidCount {
 			pids = append(pids, binary.LittleEndian.Uint32(buffer[i*4:i*4+4]))
 		}
 

@@ -84,10 +84,7 @@ func StartServer(reload bool) {
 		logging.Notice("QR2", "Loaded", aurora.Cyan(len(groups)), "groups")
 	}
 
-	waitGroup.Add(1)
-
-	go func() {
-		defer waitGroup.Done()
+	waitGroup.Go(func() {
 
 		// Close the listener when the application closes.
 		defer func() {
@@ -110,7 +107,7 @@ func StartServer(reload bool) {
 
 			go handleConnection(conn, *addr.(*net.UDPAddr), buf[:n])
 		}
-	}()
+	})
 }
 
 func Shutdown() {

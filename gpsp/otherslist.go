@@ -83,12 +83,13 @@ func handleOthersList(command common.GameSpyCommand) string {
 		return gpcm.ErrSearch.GetMessage()
 	}
 
-	payload := `\otherslist\`
+	var payload strings.Builder
+	payload.WriteString(`\otherslist\`)
 	for _, strOtherId := range opidsSplit {
-		payload += `\o\` + strOtherId
-		payload += `\uniquenick\` + uniqueNick
+		payload.WriteString(`\o\` + strOtherId)
+		payload.WriteString(`\uniquenick\` + uniqueNick)
 	}
 
-	payload += `\oldone\\final\`
-	return payload
+	payload.WriteString(`\oldone\\final\`)
+	return payload.String()
 }

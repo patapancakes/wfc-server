@@ -101,19 +101,19 @@ func ParseGameStatsMessage(msg string) ([]GameSpyCommand, error) {
 
 func CreateGameSpyMessage(command GameSpyCommand) string {
 	query := ""
-	endQuery := ""
+	var endQuery strings.Builder
 	for k, v := range command.OtherValues {
 		switch {
 		case command.Command == "lc" && k == "id":
 			fallthrough
 		case command.Command == "getpdr" && k == "data":
-			endQuery += fmt.Sprintf(`\%s\%s`, k, v)
+			endQuery.WriteString(fmt.Sprintf(`\%s\%s`, k, v))
 		default:
 			query += fmt.Sprintf(`\%s\%s`, k, v)
 		}
 	}
 
-	query += endQuery
+	query += endQuery.String()
 
 	if command.Command != "" {
 		query = fmt.Sprintf(`\%s\%s%s`, command.Command, command.CommandValue, query)

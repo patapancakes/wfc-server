@@ -206,7 +206,7 @@ func HandlePacket(index uint64, data []byte) {
 	builder.Grow(length)
 
 	// Copy one rune at a time to enforce ASCII (rather than UTF-8)
-	for i := 0; i < length; i++ {
+	for i := range length {
 		if session.ReadBuffer[i] == 0 {
 			logging.Error(session.ModuleName, "Null byte in packet")
 			logging.Error(session.ModuleName, "Raw data:", string(data))

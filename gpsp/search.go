@@ -2,6 +2,7 @@ package gpsp
 
 import (
 	"strconv"
+	"strings"
 	"wwfc/common"
 	"wwfc/gpcm"
 	"wwfc/logging"
@@ -26,19 +27,19 @@ func handleSearch(command common.GameSpyCommand) string {
 
 	moduleName = "GPSP:" + strconv.FormatUint(profileId, 10)
 
-	logInfo := ""
+	var logInfo strings.Builder
 	for _, field := range []string{
 		"nick", "uniquenick", "email", "firstname", "lastname", "icquin", "skip",
 	} {
 		if value, ok := command.OtherValues[field]; ok {
-			logInfo += " " + aurora.BrightCyan(field).String() + ": '" + aurora.Cyan(value).String() + "'"
+			logInfo.WriteString(" " + aurora.BrightCyan(field).String() + ": '" + aurora.Cyan(value).String() + "'")
 		}
 	}
 
-	if logInfo == "" {
+	if logInfo.String() == "" {
 		logging.Info(moduleName, "Search with no fields")
 	} else {
-		logging.Info(moduleName, "Search"+logInfo)
+		logging.Info(moduleName, "Search"+logInfo.String())
 	}
 
 	return common.CreateGameSpyMessage(common.GameSpyCommand{

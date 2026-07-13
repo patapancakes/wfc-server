@@ -123,10 +123,7 @@ func StartServer(reload bool) {
 		logging.Notice("NATNEG", "Loaded", aurora.Cyan(len(sessions)), "sessions")
 	}
 
-	waitGroup.Add(1)
-
-	go func() {
-		defer waitGroup.Done()
+	waitGroup.Go(func() {
 
 		// Close the listener when the application closes.
 		defer func() {
@@ -149,7 +146,7 @@ func StartServer(reload bool) {
 
 			go handleConnection(conn, addr, buffer[:size])
 		}
-	}()
+	})
 }
 
 func Shutdown() {

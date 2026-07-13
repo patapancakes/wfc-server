@@ -20,7 +20,7 @@ func (data RawMii) CalculateMiiCRC() uint16 {
 	crc := uint16(0)
 
 	for _, val := range data.Data {
-		for j := 0; j < 8; j++ {
+		for range 8 {
 			if crc&0x8000 != 0 {
 				crc <<= 1
 				crc ^= 0x1021
@@ -82,7 +82,7 @@ func (mii RawMii) ClearMiiInfo() RawMii {
 	}
 
 	// Clear the creator name
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		mii.Data[0x36+i] = 0
 	}
 

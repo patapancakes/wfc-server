@@ -10,7 +10,7 @@ func EncryptTypeX(key []byte, challenge []byte, data []byte) []byte {
 
 	rnd := time.Now().Unix()
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		rnd = (rnd * 0x343FD) + 0x269EC3
 		returnData[i] = byte(rnd ^ int64(key[i%len(key)]) ^ int64(challenge[i%len(challenge)]))
 	}
@@ -39,7 +39,7 @@ func initEncrypt(encxkey, key, validate, data []byte) []byte {
 }
 
 func enctypexFuncX(encxkey, key, challenge, data []byte) {
-	for i := 0; i < len(data); i++ {
+	for i := range data {
 		challenge[(int(key[i%len(key)])*i)&7] ^= challenge[i&7] ^ data[i]
 	}
 
@@ -47,7 +47,7 @@ func enctypexFuncX(encxkey, key, challenge, data []byte) {
 }
 
 func func4(encxkey, challenge []byte, challengeLen int) {
-	for i := 0; i < 256; i++ {
+	for i := range 256 {
 		encxkey[i] = byte(i)
 	}
 
@@ -108,7 +108,7 @@ func func5(encxkey []byte, cnt int, id []byte, idLen, n1, n2 int) (int, int, int
 }
 
 func func6e(encxkey []byte, data []byte) []byte {
-	for i := 0; i < len(data); i++ {
+	for i := range data {
 		data[i] = func7e(encxkey, data[i])
 	}
 

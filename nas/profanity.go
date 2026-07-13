@@ -173,17 +173,17 @@ func handleAuthProfanityEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	// TODO - Handle wtype? Unsure what this field does, seems to always be an empty string
 
-	prwords := ""
-	for _, word := range strings.Split(words, "\t") {
+	var prwords strings.Builder
+	for word := range strings.SplitSeq(words, "\t") {
 		if isBadWord, _ := IsBadWord(word); isBadWord {
-			prwords += "1"
+			prwords.WriteString("1")
 		} else {
-			prwords += "0"
+			prwords.WriteString("0")
 		}
 	}
 
 	returncd := ""
-	if strings.Contains(prwords, "1") {
+	if strings.Contains(prwords.String(), "1") {
 		returncd = "040"
 	} else {
 		returncd = "000"
@@ -191,18 +191,18 @@ func handleAuthProfanityEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	reply := map[string]string{
 		"returncd": returncd,
-		"prwords":  prwords,
+		"prwords":  prwords.String(),
 	}
 
 	// Only known value of this field that works this way
 	if wordsRegion == "A" {
 		// TODO - The real server seems to handle the input words differently per region? These values are supposed to differ from prwords
-		reply["prwordsA"] = prwords
-		reply["prwordsC"] = prwords
-		reply["prwordsE"] = prwords
-		reply["prwordsJ"] = prwords
-		reply["prwordsK"] = prwords
-		reply["prwordsP"] = prwords
+		reply["prwordsA"] = prwords.String()
+		reply["prwordsC"] = prwords.String()
+		reply["prwordsE"] = prwords.String()
+		reply["prwordsJ"] = prwords.String()
+		reply["prwordsK"] = prwords.String()
+		reply["prwordsP"] = prwords.String()
 	}
 
 	writeAuthResponse(w, reply)

@@ -1,6 +1,7 @@
 package gpsp
 
 import (
+	"strings"
 	"wwfc/common"
 	"wwfc/gpcm"
 	"wwfc/logging"
@@ -24,15 +25,15 @@ func HandlePacket(index uint64, data []byte) {
 	moduleName := "GPSP"
 
 	// TODO: Handle split packets
-	message := ""
+	var message strings.Builder
 	for _, b := range data {
-		message += string(b)
+		message.WriteString(string(b))
 	}
 
-	commands, err := common.ParseGameSpyMessage(message)
+	commands, err := common.ParseGameSpyMessage(message.String())
 	if err != nil {
 		logging.Error(moduleName, "Error parsing message:", err.Error())
-		logging.Error(moduleName, "Raw data:", message)
+		logging.Error(moduleName, "Raw data:", message.String())
 		replyError(moduleName, index, gpcm.ErrParse)
 		return
 	}
@@ -41,7 +42,7 @@ func HandlePacket(index uint64, data []byte) {
 		switch command.Command {
 		default:
 			logging.Error(moduleName, "Unknown command:", command.Command)
-			logging.Error(moduleName, "Raw data:", message)
+			logging.Error(moduleName, "Raw data:", message.String())
 			replyError(moduleName, index, gpcm.ErrParse)
 
 		case "ka":

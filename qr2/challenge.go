@@ -18,14 +18,14 @@ func sendChallenge(conn net.PacketConn, addr net.UDPAddr, session Session, looku
 	if challenge == "" {
 		// Generate challenge
 		addrString := strings.Split(addr.String(), ":")
-		var hexIP string
-		for _, i := range strings.Split(addrString[0], ".") {
+		var hexIP strings.Builder
+		for i := range strings.SplitSeq(addrString[0], ".") {
 			val, err := strconv.ParseUint(i, 10, 64)
 			if err != nil {
 				panic(err)
 			}
 
-			hexIP += fmt.Sprintf("%02X", val)
+			hexIP.WriteString(fmt.Sprintf("%02X", val))
 		}
 
 		port, err := strconv.ParseUint(addrString[1], 10, 64)
@@ -35,7 +35,7 @@ func sendChallenge(conn net.PacketConn, addr net.UDPAddr, session Session, looku
 
 		hexPort := fmt.Sprintf("%04X", port)
 
-		challenge = common.RandomString(6) + "00" + hexIP + hexPort
+		challenge = common.RandomString(6) + "00" + hexIP.String() + hexPort
 		mutex.Lock()
 		if sessionPtr := sessions[lookupAddr]; sessionPtr != nil {
 			sessionPtr.Challenge = challenge
@@ -51,7 +51,7 @@ func sendChallenge(conn net.PacketConn, addr net.UDPAddr, session Session, looku
 	response = append(response, 0)
 
 	go func() {
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			_, err := conn.WriteTo(response, &addr)
 
 			time.Sleep(1 * time.Second)
