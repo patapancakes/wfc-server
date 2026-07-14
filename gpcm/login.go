@@ -219,6 +219,29 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 		panic(err)
 	}
 
+	friends, err := db.GetFriends(g.Profile.ID)
+	if err == nil {
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		for _, friend := range friends {
+			if !friend.Authorized {
+				sendMessageToSessionBuffer(BuddyRequest, friend.ID, g, addFriendMessage)
+				continue
+			}
+
+			session, ok := sessions[friend.ID]
+			if !ok || !session.LoggedIn {
+				sendMessageToSessionBuffer(BuddyStatus, friend.ID, g, offlineMessage)
+				continue
+			}
+
+			session.sendFriendStatus(g.Profile.ID, true)
+		}
+
+		g.flushBuffer()
+	}
+
 	logging.Event(
 		"logged_in",
 		map[string]any{

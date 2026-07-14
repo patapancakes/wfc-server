@@ -26,7 +26,20 @@ CREATE TABLE IF NOT EXISTS `events` (
   `event_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`event_data`)),
   `event_time` timestamp NOT NULL DEFAULT utc_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1311 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table wfc.friends
+CREATE TABLE IF NOT EXISTS `friends` (
+  `sender` int(10) unsigned NOT NULL,
+  `recipient` int(10) unsigned NOT NULL,
+  `created` timestamp NOT NULL DEFAULT utc_timestamp(),
+  UNIQUE KEY `sender_recipient` (`sender`,`recipient`),
+  KEY `FK_friends_profiles_2` (`recipient`),
+  CONSTRAINT `FK_friends_profiles` FOREIGN KEY (`sender`) REFERENCES `profiles` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FK_friends_profiles_2` FOREIGN KEY (`recipient`) REFERENCES `profiles` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -85,7 +98,7 @@ CREATE TABLE IF NOT EXISTS `profiles` (
   PRIMARY KEY (`id`) USING BTREE,
   KEY `user_id` (`user_id`),
   CONSTRAINT `FK_profiles_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=1000000007 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1000000000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Data exporting was unselected.
 

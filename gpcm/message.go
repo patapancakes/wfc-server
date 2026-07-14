@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 	"wwfc/common"
@@ -14,19 +13,9 @@ import (
 	"github.com/logrusorgru/aurora/v3"
 )
 
-const (
-	resvDenyVer3  = "GPCM3vMAT\x0316"
-	resvDenyVer11 = "GPCM11vMAT\x0300000010"
-	resvDenyVer90 = "GPCM90vMAT\x03EAAAAA**"
-
-	resvWaitVer3  = "GPCM3vMAT\x04"
-	resvWaitVer11 = "GPCM11vMAT\x04"
-	resvWaitVer90 = "GPCM90vMAT\x04"
-)
-
 func (g *GameSpySession) buddyMessage(command common.GameSpyCommand) {
 	// TODO: There are other command values that mean the same thing
-	if command.CommandValue != strconv.Itoa(BuddyStatus) {
+	if command.CommandValue != strconv.Itoa(BuddyMessage) {
 		logging.Error(g.ModuleName, "Received unknown buddy message type:", aurora.Cyan(command.CommandValue))
 		return
 	}
@@ -55,22 +44,19 @@ func (g *GameSpySession) buddyMessage(command common.GameSpyCommand) {
 	// Parse message for security and room tracking purposes
 	var version int
 	var msgDataIndex int
-	var resvDenyMsg string
 
-	if strings.HasPrefix(msg, "GPCM3vMAT") {
+	switch {
+	case strings.HasPrefix(msg, "GPCM3vMAT"):
 		version = 3
-		resvDenyMsg = resvDenyVer3
 		msgDataIndex = 9
-	} else if strings.HasPrefix(msg, "GPCM11vMAT") {
+	case strings.HasPrefix(msg, "GPCM11vMAT"):
 		// Only used for Brawl
 		version = 11
-		resvDenyMsg = resvDenyVer11
 		msgDataIndex = 10
-	} else if strings.HasPrefix(msg, "GPCM90vMAT") {
+	case strings.HasPrefix(msg, "GPCM90vMAT"):
 		version = 90
-		resvDenyMsg = resvDenyVer90
 		msgDataIndex = 10
-	} else {
+	default:
 		logging.Error(g.ModuleName, "Invalid message prefix; message:", msg)
 		g.replyError(ErrMessage)
 		return
@@ -165,8 +151,7 @@ func (g *GameSpySession) buddyMessage(command common.GameSpyCommand) {
 	var toSession *GameSpySession
 	if toSession, ok = sessions[uint32(toProfileId)]; !ok || !toSession.LoggedIn {
 		logging.Error(g.ModuleName, "Destination", aurora.Cyan(toProfileId), "is not online")
-		// g.replyError(ErrMessageFriendOffline)
-		sendMessageToSessionBuffer(BuddyMessage, uint32(toProfileId), g, resvDenyMsg)
+		g.replyError(ErrMessageFriendOffline)
 		return
 	}
 
@@ -243,39 +228,7 @@ func (g *GameSpySession) buddyMessage(command common.GameSpyCommand) {
 		newMsgStr = "GPCM90vMAT" + string(cmd) + common.Base64DwcEncoding.EncodeToString(newMsg)
 	}
 
-	// Check if this session is on the destination's RecvStatusFromList
-	if slices.Contains(toSession.RecvStatusFromList, g.Profile.ID) {
-		// The destination has already received a status message from the sender, so we can just send the message
-		sendMessageToSession(BuddyMessage, g.Profile.ID, toSession, newMsgStr)
-		return
-	}
-
-	// Send a dummy status message so the destination will accept a message from the sender
-	message := common.CreateGameSpyMessage(common.GameSpyCommand{
-		Command:      "bm",
-		CommandValue: strconv.Itoa(BuddyStatus),
-		OtherValues: map[string]string{
-			"f":   strconv.FormatUint(uint64(g.Profile.ID), 10),
-			"msg": "|s|0|ss||ls||ip|0|p|0|qm|0",
-		},
-	})
-
-	message += common.CreateGameSpyMessage(common.GameSpyCommand{
-		Command:      "bm",
-		CommandValue: strconv.Itoa(BuddyMessage),
-		OtherValues: map[string]string{
-			"f":   strconv.FormatUint(uint64(g.Profile.ID), 10),
-			"msg": newMsgStr,
-		},
-	})
-
-	if err := common.SendPacket(ServerName, toSession.ConnIndex, []byte(message)); err != nil {
-		logging.Error(g.ModuleName, "Failed to send packet:", err)
-	}
-
-	// Append sender's profile ID to dest's RecvStatusFromList
-	toSession.RecvStatusFromList = append(toSession.RecvStatusFromList, g.Profile.ID)
-
+	sendMessageToSession(BuddyMessage, g.Profile.ID, toSession, newMsgStr)
 }
 
 func (g *GameSpySession) mungeMatchReservation(toSession *GameSpySession, msgMatchData *common.MatchCommandData, toProfileId uint32, sameAddress bool) bool {

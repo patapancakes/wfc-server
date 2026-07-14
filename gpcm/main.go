@@ -36,12 +36,8 @@ type GameSpySession struct {
 	HostPlatform      string
 	UnitCode          byte
 
-	Status         string
-	LocString      string
-	FriendList     []uint32
-	AuthFriendList []uint32
-	// For syncing with local GS SDK buddy list
-	RecvStatusFromList []uint32
+	Status    string
+	LocString string
 
 	QR2IP          uint64
 	Reservation    common.MatchCommandData
@@ -136,16 +132,14 @@ func CloseConnection(index uint64) {
 
 func NewConnection(index uint64, address string) {
 	session := &GameSpySession{
-		ConnIndex:      index,
-		RemoteAddr:     address,
-		Profile:        database.Profile{},
-		ModuleName:     "GPCM:" + address,
-		LoggedIn:       false,
-		Challenge:      common.RandomString(10),
-		Status:         "",
-		LocString:      "",
-		FriendList:     []uint32{},
-		AuthFriendList: []uint32{},
+		ConnIndex:  index,
+		RemoteAddr: address,
+		Profile:    database.Profile{},
+		ModuleName: "GPCM:" + address,
+		LoggedIn:   false,
+		Challenge:  common.RandomString(10),
+		Status:     "",
+		LocString:  "",
 	}
 
 	payload := common.CreateGameSpyMessage(common.GameSpyCommand{
@@ -253,27 +247,35 @@ func HandlePacket(index uint64, data []byte) {
 		logging.Error(session.ModuleName, "Unknown command:", aurora.Cyan(command))
 	}
 
-	if session.WriteBuffer != "" {
-		data := []byte{}
-		logged := false
-		for c := 0; c < len(session.WriteBuffer); c++ {
-			if session.WriteBuffer[c] == 0x00 {
-				if !logged {
-					logging.Warn(session.ModuleName, "Non-char or null byte in response packet:", session.WriteBuffer)
-					logged = true
-				}
-				continue
-			}
+	session.flushBuffer()
+}
 
-			data = append(data, session.WriteBuffer[c])
-		}
-
-		if err := common.SendPacket(ServerName, session.ConnIndex, data); err != nil {
-			logging.Error(session.ModuleName, "Failed to send response packet:", err)
-		} else {
-			session.WriteBuffer = ""
-		}
+func (g *GameSpySession) flushBuffer() {
+	if g.WriteBuffer == "" {
+		return
 	}
+
+	data := []byte{}
+	logged := false
+	for c := 0; c < len(g.WriteBuffer); c++ {
+		if g.WriteBuffer[c] == 0x00 {
+			if !logged {
+				logging.Warn(g.ModuleName, "Non-char or null byte in response packet:", g.WriteBuffer)
+				logged = true
+			}
+			continue
+		}
+
+		data = append(data, g.WriteBuffer[c])
+	}
+
+	err := common.SendPacket(ServerName, g.ConnIndex, data)
+	if err != nil {
+		logging.Error(g.ModuleName, "Failed to send response packet:", err)
+		return
+	}
+
+	g.WriteBuffer = ""
 }
 
 func (g *GameSpySession) handleCommand(name string, commands []common.GameSpyCommand, handler func(command common.GameSpyCommand)) []common.GameSpyCommand {
