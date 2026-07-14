@@ -25,7 +25,7 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 		GsbrCode: gsbrcd,
 	}
 
-	var lastIPAddress *string
+	var lastIpAddress string
 
 	if !exists {
 		profile.ID = profileId
@@ -40,21 +40,18 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 		logging.Notice("DATABASE", "Created new GPCM profile:", aurora.Cyan(userId), aurora.Cyan(gsbrcd), aurora.Cyan(profile.ID))
 		profile.Created = true
 	} else {
-		var firstName *string
-		var lastName *string
+		var firstName sql.NullString
+		var lastName sql.NullString
+		var ip sql.NullString
 
-		err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &firstName, &lastName, &lastIPAddress)
+		err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &firstName, &lastName, &ip)
 		if err != nil {
 			return Profile{}, err
 		}
 
-		if firstName != nil {
-			profile.FirstName = *firstName
-		}
-
-		if lastName != nil {
-			profile.LastName = *lastName
-		}
+		profile.FirstName = firstName.String
+		profile.LastName = lastName.String
+		lastIpAddress = ip.String
 
 		if profileId != 0 && profile.ID != profileId {
 			err := c.UpdateProfileID(&profile, profileId)
@@ -81,17 +78,12 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 		return Profile{}, err
 	}
 
-	emptyString := ""
-	if lastIPAddress == nil {
-		lastIPAddress = &emptyString
-	}
-
 	// Find ban from device ID or IP address
 	var banExists bool
 	var banTOS bool
 	var banReason string
 	timeNow := time.Now().UTC()
-	err = c.pool.QueryRowContext(c.ctx, SearchProfileBan, profile.ID, ipAddress, *lastIPAddress, timeNow).Scan(&banExists, &banTOS, &banReason)
+	err = c.pool.QueryRowContext(c.ctx, SearchProfileBan, profile.ID, ipAddress, lastIpAddress, timeNow).Scan(&banExists, &banTOS, &banReason)
 
 	if err != nil {
 		if err != sql.ErrNoRows {
@@ -121,22 +113,18 @@ func (c *Connection) LoginUserToGameStats(userId uint64, gsbrcd string) (Profile
 		GsbrCode: gsbrcd,
 	}
 
-	var firstName *string
-	var lastName *string
-	var lastIPAddress *string
+	var firstName sql.NullString
+	var lastName sql.NullString
+	var lastIPAddress sql.NullString
 
 	err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &firstName, &lastName, &lastIPAddress)
 	if err != nil {
 		return Profile{}, err
 	}
 
-	if firstName != nil {
-		profile.FirstName = *firstName
-	}
-
-	if lastName != nil {
-		profile.LastName = *lastName
-	}
+	profile.FirstName = firstName.String
+	profile.LastName = lastName.String
+	profile.LastIPAddress = lastIPAddress.String
 
 	return profile, nil
 }
