@@ -14,18 +14,16 @@ var (
 )
 
 func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, ipAddress string, ingamesn string) (Profile, error) {
-	var exists bool
-	err := c.pool.QueryRowContext(c.ctx, DoesProfileExist, userId, gsbrcd).Scan(&exists)
-	if err != nil {
-		return Profile{}, err
-	}
-
 	profile := Profile{
 		UserID:   userId,
 		GsbrCode: gsbrcd,
 	}
 
-	var lastIpAddress string
+	var exists bool
+	err := c.pool.QueryRowContext(c.ctx, DoesProfileExist, userId, gsbrcd).Scan(&exists)
+	if err != nil {
+		return Profile{}, err
+	}
 
 	if !exists {
 		// Create the GPCM account
@@ -40,16 +38,14 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, ipAddress str
 	} else {
 		var firstName sql.NullString
 		var lastName sql.NullString
-		var ip sql.NullString
 
-		err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &firstName, &lastName, &ip)
+		err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &firstName, &lastName)
 		if err != nil {
 			return Profile{}, err
 		}
 
 		profile.FirstName = firstName.String
 		profile.LastName = lastName.String
-		lastIpAddress = ip.String
 
 		logging.Notice("DATABASE", "Log in GPCM profile:", aurora.Cyan(userId), aurora.Cyan(profile.GsbrCode), "-", aurora.Cyan(profile.ID))
 	}
@@ -65,7 +61,7 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, ipAddress str
 	var banTOS bool
 	var banReason string
 	timeNow := time.Now().UTC()
-	err = c.pool.QueryRowContext(c.ctx, SearchProfileBan, profile.ID, ipAddress, lastIpAddress, timeNow).Scan(&banExists, &banTOS, &banReason)
+	err = c.pool.QueryRowContext(c.ctx, SearchProfileBan, profile.ID, ipAddress, timeNow).Scan(&banExists, &banTOS, &banReason)
 
 	if err != nil {
 		if err != sql.ErrNoRows {
@@ -97,16 +93,14 @@ func (c *Connection) LoginUserToGameStats(userId uint64, gsbrcd string) (Profile
 
 	var firstName sql.NullString
 	var lastName sql.NullString
-	var lastIPAddress sql.NullString
 
-	err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &firstName, &lastName, &lastIPAddress)
+	err := c.pool.QueryRowContext(c.ctx, GetUserProfileID, userId, gsbrcd).Scan(&profile.ID, &firstName, &lastName)
 	if err != nil {
 		return Profile{}, err
 	}
 
 	profile.FirstName = firstName.String
 	profile.LastName = lastName.String
-	profile.LastIPAddress = lastIPAddress.String
 
 	return profile, nil
 }
