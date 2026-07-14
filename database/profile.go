@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"errors"
 	"time"
 	"wwfc/common"
@@ -114,29 +115,32 @@ func (c *Connection) UpdateProfile(profile *Profile, data map[string]string) {
 	}
 }
 
-func (c *Connection) GetProfile(profileId uint32) (Profile, bool) {
+func (c *Connection) GetProfile(profileId uint32) (Profile, error) {
 	var profile Profile
+	var firstname sql.NullString
 	row := c.pool.QueryRowContext(c.ctx, GetProfile, profileId)
-	err := row.Scan(&profile.UserID, &profile.GsbrCode, &profile.FirstName, &profile.LastName, &profile.LastIPAddress, &profile.LastInGameSn)
+	err := row.Scan(&profile.UserID, &profile.GsbrCode, &firstname, &profile.LastName, &profile.LastIPAddress, &profile.LastInGameSn)
 	if err != nil {
-		return Profile{}, false
+		return Profile{}, err
 	}
 
 	profile.ID = profileId
-	return profile, true
+	profile.FirstName = firstname.String
+	return profile, nil
 }
 
-func (c *Connection) ClearProfile(profileId uint32) (Profile, bool) {
+func (c *Connection) ClearProfile(profileId uint32) (Profile, error) {
 	var profile Profile
+	var firstname sql.NullString
 	row := c.pool.QueryRowContext(c.ctx, ClearProfileQuery, profileId)
-	err := row.Scan(&profile.UserID, &profile.GsbrCode, &profile.FirstName, &profile.LastName, &profile.LastIPAddress, &profile.LastInGameSn)
-
+	err := row.Scan(&profile.UserID, &profile.GsbrCode, &firstname, &profile.LastName, &profile.LastIPAddress, &profile.LastInGameSn)
 	if err != nil {
-		return Profile{}, false
+		return Profile{}, err
 	}
 
 	profile.ID = profileId
-	return profile, true
+	profile.FirstName = firstname.String
+	return profile, nil
 }
 
 func (c *Connection) BanProfile(profileId uint32, tos bool, length time.Duration, reason string, reasonHidden string, moderator string) bool {

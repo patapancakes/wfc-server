@@ -30,8 +30,8 @@ func (g *GameSpySession) getProfile(command common.GameSpyCommand) {
 		mutex.Unlock()
 	} else {
 		mutex.Unlock()
-		profile, ok = db.GetProfile(uint32(profileId))
-		if !ok {
+		profile, err = db.GetProfile(uint32(profileId))
+		if err != nil {
 			// The profile info was requested on is invalid.
 			g.replyError(ErrGetProfileBadProfile)
 			return
