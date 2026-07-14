@@ -11,7 +11,6 @@ const (
 	InsertProfile              = `INSERT INTO profiles (user_id, gsbrcd) VALUES (?, ?) RETURNING id`
 	InsertProfileWithID        = `INSERT INTO profiles (id, user_id, gsbrcd) VALUES (?, ?, ?)`
 	UpdateProfileTable         = `UPDATE profiles SET firstname = CASE WHEN ? THEN ? ELSE firstname END, lastname = CASE WHEN ? THEN ? ELSE lastname END WHERE id = ?`
-	UpdateUserProfileID        = `UPDATE profiles SET id = ? WHERE user_id = ? AND gsbrcd = ?`
 	GetProfile                 = `SELECT user_id, gsbrcd, firstname, lastname, last_ip_address, last_ingamesn FROM profiles WHERE id = ?`
 	ClearProfileQuery          = `DELETE FROM profiles WHERE id = ? RETURNING user_id, gsbrcd, firstname, lastname, last_ip_address, last_ingamesn`
 	DoesProfileExist           = `SELECT EXISTS(SELECT 1 FROM profiles WHERE user_id = ? AND gsbrcd = ?)`
@@ -71,29 +70,6 @@ func (c *Connection) CreateProfile(profile *Profile) error {
 	}
 
 	_, err = c.pool.ExecContext(c.ctx, InsertProfileWithID, profile.ID, profile.UserID, profile.GsbrCode)
-	return err
-}
-
-func (c *Connection) UpdateProfileID(profile *Profile, newProfileId uint32) error {
-	if newProfileId >= 1000000000 {
-		return ErrReservedProfileIDRange
-	}
-
-	var exists bool
-	err := c.pool.QueryRowContext(c.ctx, IsProfileIDInUse, newProfileId).Scan(&exists)
-	if err != nil {
-		return err
-	}
-
-	if exists {
-		return ErrProfileIDInUse
-	}
-
-	_, err = c.pool.ExecContext(c.ctx, UpdateUserProfileID, newProfileId, profile.UserID, profile.GsbrCode)
-	if err == nil {
-		profile.ID = newProfileId
-	}
-
 	return err
 }
 

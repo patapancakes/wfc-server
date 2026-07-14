@@ -118,22 +118,7 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 
 	proof := generateProof(g.Challenge, nasChallenge, command.OtherValues["authtoken"], command.OtherValues["challenge"])
 
-	cmdProfileId := uint32(0)
-	if cmdProfileIdStr, exists := command.OtherValues["profileid"]; exists {
-		cmdProfileId2, err := strconv.ParseUint(cmdProfileIdStr, 10, 32)
-		if err != nil {
-			g.replyError(GPError{
-				ErrorCode:   ErrLogin.ErrorCode,
-				ErrorString: "The provided profile ID is invalid.",
-				Fatal:       true,
-			})
-			return
-		}
-
-		cmdProfileId = uint32(cmdProfileId2)
-	}
-
-	if !g.performLoginWithDatabase(authTokenObj.UserID, common.NullTerminatedString(authTokenObj.GsbrCode[:]), cmdProfileId) {
+	if !g.performLoginWithDatabase(authTokenObj.UserID, common.NullTerminatedString(authTokenObj.GsbrCode[:])) {
 		return
 	}
 
@@ -253,8 +238,8 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 	)
 }
 
-func (g *GameSpySession) performLoginWithDatabase(userId uint64, gsbrCode string, profileId uint32) bool {
-	profile, err := db.LoginUserToGPCM(userId, gsbrCode, profileId, strings.Split(g.RemoteAddr, ":")[0], g.InGameName)
+func (g *GameSpySession) performLoginWithDatabase(userId uint64, gsbrCode string) bool {
+	profile, err := db.LoginUserToGPCM(userId, gsbrCode, strings.Split(g.RemoteAddr, ":")[0], g.InGameName)
 	g.Profile = profile
 
 	if err != nil {

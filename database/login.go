@@ -13,7 +13,7 @@ var (
 	ErrProfileBannedTOS = errors.New("profile is banned for violating the Terms of Service")
 )
 
-func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uint32, ipAddress string, ingamesn string) (Profile, error) {
+func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, ipAddress string, ingamesn string) (Profile, error) {
 	var exists bool
 	err := c.pool.QueryRowContext(c.ctx, DoesProfileExist, userId, gsbrcd).Scan(&exists)
 	if err != nil {
@@ -28,8 +28,6 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 	var lastIpAddress string
 
 	if !exists {
-		profile.ID = profileId
-
 		// Create the GPCM account
 		err := c.CreateProfile(&profile)
 		if err != nil {
@@ -53,23 +51,7 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, profileId uin
 		profile.LastName = lastName.String
 		lastIpAddress = ip.String
 
-		if profileId != 0 && profile.ID != profileId {
-			err := c.UpdateProfileID(&profile, profileId)
-			if err != nil {
-				logging.Warn("DATABASE", "Could not update", aurora.Cyan(userId), aurora.Cyan(gsbrcd), "profile ID from", aurora.Cyan(profile.ID), "to", aurora.Cyan(profileId))
-			} else {
-				logging.Notice("DATABASE", "Updated GPCM profile ID:", aurora.Cyan(userId), aurora.Cyan(gsbrcd), aurora.Cyan(profile.ID))
-			}
-		}
-
 		logging.Notice("DATABASE", "Log in GPCM profile:", aurora.Cyan(userId), aurora.Cyan(profile.GsbrCode), "-", aurora.Cyan(profile.ID))
-	}
-
-	// This should be set if the user already knows its own profile ID
-	if profileId != 0 && profile.LastName == "" {
-		c.UpdateProfile(&profile, map[string]string{
-			"lastname": "000000000" + gsbrcd,
-		})
 	}
 
 	// Update the user's last IP address and ingamesn
