@@ -24,10 +24,9 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, ipAddress str
 	if err != nil {
 		return Profile{}, err
 	}
-
 	if !exists {
 		// Create the GPCM account
-		err := c.CreateProfile(&profile)
+		profile.ID, err = c.CreateProfile(profile)
 		if err != nil {
 			logging.Error("DATABASE", "Error creating profile:", aurora.Cyan(userId), aurora.Cyan(gsbrcd), aurora.Cyan(profile.ID), "\nerror:", err.Error())
 			return Profile{}, err
@@ -62,7 +61,6 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, ipAddress str
 	var banReason string
 	timeNow := time.Now().UTC()
 	err = c.pool.QueryRowContext(c.ctx, SearchProfileBan, profile.ID, ipAddress, timeNow).Scan(&banExists, &banTOS, &banReason)
-
 	if err != nil {
 		if err != sql.ErrNoRows {
 			return Profile{}, err
@@ -70,7 +68,6 @@ func (c *Connection) LoginUserToGPCM(userId uint64, gsbrcd string, ipAddress str
 
 		banExists = false
 	}
-
 	if banExists {
 		if banTOS {
 			logging.Warn("DATABASE", "Profile", aurora.Cyan(profile.ID), "is banned")

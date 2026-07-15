@@ -9,12 +9,10 @@ import (
 
 const (
 	InsertProfile              = `INSERT INTO profiles (user_id, gsbrcd) VALUES (?, ?) RETURNING id`
-	InsertProfileWithID        = `INSERT INTO profiles (id, user_id, gsbrcd) VALUES (?, ?, ?)`
 	UpdateProfileTable         = `UPDATE profiles SET firstname = CASE WHEN ? THEN ? ELSE firstname END, lastname = CASE WHEN ? THEN ? ELSE lastname END WHERE id = ?`
 	GetProfile                 = `SELECT user_id, gsbrcd, firstname, lastname, last_ip_address, last_ingamesn FROM profiles WHERE id = ?`
 	ClearProfileQuery          = `DELETE FROM profiles WHERE id = ? RETURNING user_id, gsbrcd, firstname, lastname, last_ip_address, last_ingamesn`
 	DoesProfileExist           = `SELECT EXISTS(SELECT 1 FROM profiles WHERE user_id = ? AND gsbrcd = ?)`
-	IsProfileIDInUse           = `SELECT EXISTS(SELECT 1 FROM profiles WHERE id = ?)`
 	DeleteProfileSession       = `DELETE FROM sessions WHERE id = ?`
 	GetUserProfileID           = `SELECT id, firstname, lastname FROM profiles WHERE user_id = ? AND gsbrcd = ?`
 	UpdateProfileLastIPAddress = `UPDATE profiles SET last_ip_address = ?, last_ingamesn = ? WHERE id = ?`
@@ -50,45 +48,23 @@ var (
 	ErrReservedProfileIDRange = errors.New("profile ID is in reserved range")
 )
 
-func (c *Connection) CreateProfile(profile *Profile) error {
-	if profile.ID == 0 {
-		return c.pool.QueryRowContext(c.ctx, InsertProfile, profile.UserID, profile.GsbrCode).Scan(&profile.ID)
+func (c *Connection) CreateProfile(profile Profile) (uint32, error) {
+	var id uint32
+	err := c.pool.QueryRowContext(c.ctx, InsertProfile, profile.UserID, profile.GsbrCode).Scan(&id)
+	if err != nil {
+		return 0, err
 	}
 
-	if profile.ID >= 1000000000 {
-		return ErrReservedProfileIDRange
-	}
+	return id, nil
+}
 
-	var exists bool
-	err := c.pool.QueryRowContext(c.ctx, IsProfileIDInUse, profile.ID).Scan(&exists)
+func (c *Connection) UpdateProfile(profile Profile) error {
+	_, err := c.pool.ExecContext(c.ctx, UpdateProfileTable, profile.FirstName != "", profile.FirstName, profile.LastName != "", profile.LastName, profile.ID)
 	if err != nil {
 		return err
 	}
 
-	if exists {
-		return ErrProfileIDInUse
-	}
-
-	_, err = c.pool.ExecContext(c.ctx, InsertProfileWithID, profile.ID, profile.UserID, profile.GsbrCode)
-	return err
-}
-
-func (c *Connection) UpdateProfile(profile *Profile, data map[string]string) {
-	firstName, firstNameExists := data["firstname"]
-	lastName, lastNameExists := data["lastname"]
-
-	_, err := c.pool.ExecContext(c.ctx, UpdateProfileTable, firstNameExists, firstName, lastNameExists, lastName, profile.ID)
-	if err != nil {
-		panic(err)
-	}
-
-	if firstNameExists {
-		profile.FirstName = firstName
-	}
-
-	if lastNameExists {
-		profile.LastName = lastName
-	}
+	return nil
 }
 
 func (c *Connection) GetProfile(profileId uint32) (Profile, error) {

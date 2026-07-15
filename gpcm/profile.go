@@ -82,7 +82,17 @@ func (g *GameSpySession) getProfile(command common.GameSpyCommand) {
 }
 
 func (g *GameSpySession) updateProfile(command common.GameSpyCommand) {
-	db.UpdateProfile(&g.Profile, command.OtherValues)
+	firstname, ok := command.OtherValues["firstname"]
+	if ok {
+		g.Profile.FirstName = firstname
+	}
+
+	lastname, ok := command.OtherValues["lastname"]
+	if ok {
+		g.Profile.LastName = lastname
+	}
+
+	db.UpdateProfile(g.Profile)
 }
 
 func VerifyPlayerSearch(profileId uint32, sessionKey int32, gameName string) (string, bool) {

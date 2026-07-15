@@ -239,9 +239,8 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 }
 
 func (g *GameSpySession) performLoginWithDatabase(userId uint64, gsbrCode string) bool {
-	profile, err := db.LoginUserToGPCM(userId, gsbrCode, strings.Split(g.RemoteAddr, ":")[0], g.InGameName)
-	g.Profile = profile
-
+	var err error
+	g.Profile, err = db.LoginUserToGPCM(userId, gsbrCode, strings.Split(g.RemoteAddr, ":")[0], g.InGameName)
 	if err != nil {
 		logging.Error(g.ModuleName, "DB error:", err)
 
@@ -261,7 +260,7 @@ func (g *GameSpySession) performLoginWithDatabase(userId uint64, gsbrCode string
 		case database.ErrProfileBannedTOS:
 			g.replyError(GPError{
 				ErrorCode:   ErrLogin.ErrorCode,
-				ErrorString: "The profile is banned from the service. Reason: " + profile.BanReason,
+				ErrorString: "The profile is banned from the service. Reason: " + g.Profile.BanReason,
 				Fatal:       true,
 			})
 		default:
