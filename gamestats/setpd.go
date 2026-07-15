@@ -1,11 +1,11 @@
 package gamestats
 
 import (
+	"owfc/common"
+	"owfc/logging"
 	"strconv"
 	"strings"
 	"time"
-	"wwfc/common"
-	"wwfc/logging"
 
 	"github.com/logrusorgru/aurora/v3"
 )

@@ -4,8 +4,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
-	"wwfc/common"
-	"wwfc/logging"
+	"owfc/common"
+	"owfc/logging"
 
 	"github.com/logrusorgru/aurora/v3"
 )

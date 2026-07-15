@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"hash/crc32"
-	"wwfc/logging"
+	"owfc/logging"
 
 	"github.com/logrusorgru/aurora/v3"
 )

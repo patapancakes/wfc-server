@@ -2,10 +2,10 @@ package qr2
 
 import (
 	"maps"
+	"owfc/common"
 	"sort"
 	"strconv"
 	"time"
-	"wwfc/common"
 )
 
 type MiiInfo struct {

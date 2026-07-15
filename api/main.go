@@ -2,8 +2,8 @@ package api
 
 import (
 	"net/http"
-	"wwfc/common"
-	"wwfc/database"
+	"owfc/common"
+	"owfc/database"
 )
 
 var (

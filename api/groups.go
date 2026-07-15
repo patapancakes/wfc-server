@@ -2,7 +2,7 @@ package api
 
 import (
 	"net/http"
-	"wwfc/qr2"
+	"owfc/qr2"
 )
 
 func HandleGroups(w http.ResponseWriter, r *http.Request) {

@@ -4,8 +4,8 @@ import (
 	"encoding/binary"
 	"encoding/gob"
 	"os"
-	"wwfc/common"
-	"wwfc/logging"
+	"owfc/common"
+	"owfc/logging"
 
 	"github.com/linkdata/deadlock"
 	"github.com/logrusorgru/aurora/v3"

@@ -3,8 +3,8 @@ package qr2
 import (
 	"encoding/gob"
 	"os"
+	"owfc/common"
 	"strconv"
-	"wwfc/common"
 )
 
 type LoginInfo struct {

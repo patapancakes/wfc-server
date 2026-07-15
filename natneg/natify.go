@@ -2,8 +2,8 @@ package natneg
 
 import (
 	"net"
-	"wwfc/common"
-	"wwfc/logging"
+	"owfc/common"
+	"owfc/logging"
 )
 
 func (session *NATNEGSession) handleNatify(conn net.PacketConn, addr net.Addr, buffer []byte, moduleName string, version byte) {

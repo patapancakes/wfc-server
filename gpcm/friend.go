@@ -1,11 +1,11 @@
 package gpcm
 
 import (
+	"owfc/common"
+	"owfc/logging"
+	"owfc/qr2"
 	"strconv"
 	"strings"
-	"wwfc/common"
-	"wwfc/logging"
-	"wwfc/qr2"
 
 	mysqlerrnum "github.com/bombsimon/mysql-error-numbers/v3"
 	"github.com/logrusorgru/aurora/v3"

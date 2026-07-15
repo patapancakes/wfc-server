@@ -4,11 +4,11 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"owfc/common"
+	"owfc/logging"
+	"owfc/qr2"
 	"strconv"
 	"strings"
-	"wwfc/common"
-	"wwfc/logging"
-	"wwfc/qr2"
 
 	"github.com/logrusorgru/aurora/v3"
 )

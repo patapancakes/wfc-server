@@ -2,9 +2,9 @@ package database
 
 import (
 	"database/sql"
+	"owfc/common"
 	"slices"
 	"time"
-	"wwfc/common"
 )
 
 const (

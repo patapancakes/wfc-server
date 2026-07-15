@@ -2,11 +2,11 @@ package gamestats
 
 import (
 	"database/sql"
+	"owfc/common"
+	"owfc/logging"
 	"strconv"
 	"strings"
 	"time"
-	"wwfc/common"
-	"wwfc/logging"
 
 	"github.com/logrusorgru/aurora/v3"
 )

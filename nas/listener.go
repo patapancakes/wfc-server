@@ -6,9 +6,9 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"owfc/common"
+	"owfc/logging"
 	"strings"
-	"wwfc/common"
-	"wwfc/logging"
 
 	"github.com/logrusorgru/aurora/v3"
 )
@@ -61,9 +61,9 @@ func listenAndServe() {
 	common.ShouldNotError(err)
 	listener := &httpListener{Listener: l}
 
-	defer func() {
+	/*defer func() {
 		common.ShouldNotError(listener.Close())
-	}()
+	}()*/
 
 	err = server.Serve(listener)
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {

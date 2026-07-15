@@ -6,9 +6,9 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"owfc/common"
 	"strings"
 	"time"
-	"wwfc/common"
 )
 
 var profanityFilePath = "./profanity.txt"

@@ -2,7 +2,7 @@ package natneg
 
 import (
 	"net"
-	"wwfc/logging"
+	"owfc/logging"
 )
 
 const (

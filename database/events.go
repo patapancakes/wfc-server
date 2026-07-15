@@ -2,8 +2,8 @@ package database
 
 import (
 	"encoding/json"
-	"wwfc/common"
-	"wwfc/logging"
+	"owfc/common"
+	"owfc/logging"
 )
 
 const (

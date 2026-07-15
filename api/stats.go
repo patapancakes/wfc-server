@@ -2,8 +2,8 @@ package api
 
 import (
 	"net/http"
-	"wwfc/common"
-	"wwfc/qr2"
+	"owfc/common"
+	"owfc/qr2"
 )
 
 type StatsResponseSpec struct {

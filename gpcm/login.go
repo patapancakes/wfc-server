@@ -5,13 +5,13 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"math/rand"
+	"owfc/common"
+	"owfc/database"
+	"owfc/logging"
+	"owfc/qr2"
 	"strconv"
 	"strings"
 	"time"
-	"wwfc/common"
-	"wwfc/database"
-	"wwfc/logging"
-	"wwfc/qr2"
 
 	"github.com/logrusorgru/aurora/v3"
 )

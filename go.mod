@@ -1,4 +1,4 @@
-module wwfc
+module owfc
 
 go 1.26.4
 

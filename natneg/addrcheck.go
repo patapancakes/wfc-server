@@ -4,8 +4,8 @@ import (
 	"encoding/binary"
 	"net"
 	"net/netip"
-	"wwfc/common"
-	"wwfc/logging"
+	"owfc/common"
+	"owfc/logging"
 )
 
 func (session *NATNEGSession) handleAddressCheck(conn net.PacketConn, addr net.Addr, buffer []byte, moduleName string, version byte) {

@@ -3,7 +3,7 @@ package common
 import (
 	"encoding/xml"
 	"os"
-	"wwfc/logging"
+	"owfc/logging"
 
 	"github.com/linkdata/deadlock"
 )
@@ -65,7 +65,7 @@ func GetConfig() Config {
 		return config
 	}
 
-	config.ServerName = "WiiLink"
+	config.ServerName = "OpenWFC"
 
 	f, err := os.Open("config.xml")
 	if err != nil {

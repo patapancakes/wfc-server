@@ -2,10 +2,10 @@ package api
 
 import (
 	"net/http"
+	"owfc/common"
 	"strconv"
 	"strings"
 	"time"
-	"wwfc/common"
 )
 
 type BanInfoResponseSpec struct {

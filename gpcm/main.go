@@ -3,11 +3,11 @@ package gpcm
 import (
 	"encoding/gob"
 	"os"
+	"owfc/common"
+	"owfc/database"
+	"owfc/logging"
+	"owfc/qr2"
 	"strings"
-	"wwfc/common"
-	"wwfc/database"
-	"wwfc/logging"
-	"wwfc/qr2"
 
 	"github.com/linkdata/deadlock"
 	"github.com/logrusorgru/aurora/v3"

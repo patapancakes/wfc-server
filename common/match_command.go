@@ -3,7 +3,7 @@ package common
 import (
 	"encoding/binary"
 	"fmt"
-	"wwfc/logging"
+	"owfc/logging"
 
 	"github.com/logrusorgru/aurora/v3"
 )

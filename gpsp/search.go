@@ -1,11 +1,11 @@
 package gpsp
 
 import (
+	"owfc/common"
+	"owfc/gpcm"
+	"owfc/logging"
 	"strconv"
 	"strings"
-	"wwfc/common"
-	"wwfc/gpcm"
-	"wwfc/logging"
 
 	"github.com/logrusorgru/aurora/v3"
 )

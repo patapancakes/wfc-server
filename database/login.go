@@ -3,8 +3,8 @@ package database
 import (
 	"database/sql"
 	"errors"
+	"owfc/logging"
 	"time"
-	"wwfc/logging"
 
 	"github.com/logrusorgru/aurora/v3"
 )

@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"owfc/common"
+	"owfc/database"
+	"owfc/logging"
 	"regexp"
 	"strconv"
 	"strings"
-	"wwfc/common"
-	"wwfc/database"
-	"wwfc/logging"
 
 	"github.com/logrusorgru/aurora/v3"
 )

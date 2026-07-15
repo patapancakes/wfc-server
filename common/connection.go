@@ -2,8 +2,8 @@ package common
 
 import (
 	"net/rpc"
+	"owfc/logging"
 	"time"
-	"wwfc/logging"
 )
 
 var rpcFrontend *rpc.Client

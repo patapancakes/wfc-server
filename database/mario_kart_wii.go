@@ -2,7 +2,7 @@ package database
 
 import (
 	"database/sql"
-	"wwfc/common"
+	"owfc/common"
 )
 
 type MarioKartWiiTopTenRanking struct {

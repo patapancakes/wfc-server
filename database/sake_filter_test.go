@@ -2,8 +2,8 @@ package database
 
 import (
 	"fmt"
+	"owfc/filter"
 	"testing"
-	"wwfc/filter"
 )
 
 func testGenerateFilter(t *testing.T, expression string) {

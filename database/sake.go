@@ -3,9 +3,9 @@ package database
 import (
 	"encoding/json"
 	"errors"
+	"owfc/common"
+	"owfc/filter"
 	"strings"
-	"wwfc/common"
-	"wwfc/filter"
 
 	mysqlerrnum "github.com/bombsimon/mysql-error-numbers/v3"
 )

@@ -1,10 +1,10 @@
 package gpsp
 
 import (
+	"owfc/common"
+	"owfc/gpcm"
+	"owfc/logging"
 	"strings"
-	"wwfc/common"
-	"wwfc/gpcm"
-	"wwfc/logging"
 )
 
 var ServerName = "gpsp"

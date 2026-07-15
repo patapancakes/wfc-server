@@ -4,10 +4,10 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"math/rand"
+	"owfc/common"
+	"owfc/gpcm"
+	"owfc/logging"
 	"strconv"
-	"wwfc/common"
-	"wwfc/gpcm"
-	"wwfc/logging"
 
 	"github.com/logrusorgru/aurora/v3"
 )

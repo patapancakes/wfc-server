@@ -3,10 +3,10 @@ package qr2
 import (
 	"encoding/binary"
 	"net"
+	"owfc/common"
+	"owfc/logging"
 	"strconv"
 	"strings"
-	"wwfc/common"
-	"wwfc/logging"
 
 	"github.com/logrusorgru/aurora/v3"
 )
