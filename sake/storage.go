@@ -3,7 +3,6 @@ package sake
 import (
 	"database/sql"
 	"encoding/xml"
-	"io"
 	"net/http"
 	"sort"
 	"strconv"
@@ -183,20 +182,15 @@ func handleStorageRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		panic(err)
-	}
-
-	logging.Info("SAKE", "Received storage request with SOAPAction:", aurora.Yellow(headerAction), "and body:", aurora.Cyan(string(body)))
-
 	// Parse the SOAP request XML
 	var soap StorageRequestEnvelope
-	err = xml.Unmarshal(body, &soap)
+	err := xml.NewDecoder(r.Body).Decode(&soap)
 	if err != nil {
 		logging.Error(moduleName, "Received invalid XML")
 		return
 	}
+
+	logging.Info("SAKE", "Received storage request with SOAPAction:", aurora.Yellow(headerAction), "and body:", aurora.Cyan(soap))
 
 	response := StorageResponseEnvelope{
 		NamespaceSoap: SOAPEnvNamespace,
@@ -222,18 +216,12 @@ func handleStorageRequest(w http.ResponseWriter, r *http.Request) {
 		logging.Error(moduleName, "Invalid SOAPAction or XML request:", aurora.Cyan(headerAction))
 	}
 
-	out, err := xml.Marshal(response)
-	if err != nil {
-		panic(err)
-	}
-
-	logging.Info(moduleName, "Responding with body:", aurora.Cyan(string(out)))
-
-	payload := append([]byte(xml.Header), out...)
+	logging.Info(moduleName, "Responding with body:", aurora.Cyan(response))
 
 	w.Header().Set("Content-Type", "text/xml")
-	w.Header().Set("Content-Length", strconv.Itoa(len(payload)))
-	if _, err := w.Write(payload); err != nil {
+	w.Write([]byte(xml.Header))
+	err = xml.NewEncoder(w).Encode(response)
+	if err != nil {
 		logging.Error(moduleName, "Failed to write response:", err)
 	}
 }

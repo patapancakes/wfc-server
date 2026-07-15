@@ -65,14 +65,16 @@ func GetConfig() Config {
 		return config
 	}
 
-	data, err := os.ReadFile("config.xml")
+	config.ServerName = "WiiLink"
+
+	f, err := os.Open("config.xml")
 	if err != nil {
 		panic(err)
 	}
 
-	config.ServerName = "WiiLink"
+	defer f.Close()
 
-	err = xml.Unmarshal(data, &config)
+	err = xml.NewDecoder(f).Decode(&config)
 	if err != nil {
 		panic(err)
 	}

@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -104,13 +103,7 @@ func parsePost(r *http.Request, w http.ResponseWriter, parsed any, requiredRole 
 		return errIncorrectMethod
 	}
 
-	jsonData, err := io.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
-
-	err = json.Unmarshal(jsonData, parsed)
+	err := json.NewDecoder(r.Body).Decode(parsed)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
@@ -158,19 +151,13 @@ func replyOK(w http.ResponseWriter, data any) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	var jsonData []byte
-	if reflect.ValueOf(data).Kind() == reflect.String {
-		// Assume it's already JSON
-		jsonData = []byte(data.(string))
-	} else {
-		var err error
-		jsonData, err = json.Marshal(data)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+
+	// assume json string
+	str, ok := data.(string)
+	if ok {
+		w.Write([]byte(str))
+		return
 	}
 
-	w.Header().Set("Content-Length", strconv.Itoa(len(jsonData)))
-	_, _ = w.Write(jsonData)
+	json.NewEncoder(w).Encode(data)
 }

@@ -3,9 +3,7 @@ package race
 import (
 	"encoding/base64"
 	"encoding/xml"
-	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"wwfc/common"
 	"wwfc/logging"
@@ -97,15 +95,10 @@ func handleNintendoRacingServiceRequest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	requestBody, err := io.ReadAll(r.Body)
-	if err != nil {
-		panic(err)
-	}
-
 	soapAction := soapActionHeader[slashIndex+1 : slashIndex+1+quotationMarkIndex]
 	switch soapAction {
 	case "GetTopTenRankings":
-		handleGetTopTenRankingsRequest(moduleName, w, requestBody)
+		handleGetTopTenRankingsRequest(moduleName, w, r)
 
 	// TODO SubmitScores
 	default:
@@ -113,21 +106,21 @@ func handleNintendoRacingServiceRequest(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func handleGetTopTenRankingsRequest(moduleName string, responseWriter http.ResponseWriter, requestBody []byte) {
-	var requestXML rankingsRequestEnvelope
-	err := xml.Unmarshal(requestBody, &requestXML)
+func handleGetTopTenRankingsRequest(moduleName string, w http.ResponseWriter, r *http.Request) {
+	var request rankingsRequestEnvelope
+	err := xml.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		logging.Error(moduleName, "Got malformed XML")
-		writeErrorResponse(raceServiceResultParseError, responseWriter)
+		writeErrorResponse(raceServiceResultParseError, w)
 		return
 	}
 
-	requestData := requestXML.Body.Data
+	requestData := request.Body.Data
 
 	gameId := requestData.GameId
 	if gameId != marioKartWiiGameID {
 		logging.Error(moduleName, "Wrong GameSpy game ID:", aurora.Cyan(gameId))
-		writeErrorResponse(raceServiceResultInvalidParameters, responseWriter)
+		writeErrorResponse(raceServiceResultInvalidParameters, w)
 		return
 	}
 
@@ -136,19 +129,19 @@ func handleGetTopTenRankingsRequest(moduleName string, responseWriter http.Respo
 
 	if !regionId.IsValid() {
 		logging.Error(moduleName, "Invalid region ID:", aurora.Cyan(regionId))
-		writeErrorResponse(raceServiceResultInvalidParameters, responseWriter)
+		writeErrorResponse(raceServiceResultInvalidParameters, w)
 		return
 	}
 	if courseId < common.MarioCircuit || courseId > 32767 {
 		logging.Error(moduleName, "Invalid course ID:", aurora.Cyan(courseId))
-		writeErrorResponse(raceServiceResultInvalidParameters, responseWriter)
+		writeErrorResponse(raceServiceResultInvalidParameters, w)
 		return
 	}
 
 	topTenRankings, err := db.GetMarioKartWiiTopTenRankings(regionId, courseId)
 	if err != nil {
 		logging.Error(moduleName, "Failed to get the Top 10 rankings:", err)
-		writeErrorResponse(raceServiceResultDatabaseError, responseWriter)
+		writeErrorResponse(raceServiceResultDatabaseError, w)
 		return
 	}
 
@@ -190,10 +183,10 @@ func handleGetTopTenRankingsRequest(moduleName string, responseWriter http.Respo
 		DataArray:    dataArray,
 	}
 
-	writeResponse(responseWriter, rankingDataResponse)
+	writeResponse(w, rankingDataResponse)
 }
 
-func writeErrorResponse(raceServiceResult raceServiceResult, responseWriter http.ResponseWriter) {
+func writeErrorResponse(raceServiceResult raceServiceResult, w http.ResponseWriter) {
 	rankingDataResponse := rankingsResponseRankingDataResponse{
 		XMLNSXSI:     xmlNamespaceXSI,
 		XMLNSXSD:     xmlNamespaceXSD,
@@ -201,20 +194,14 @@ func writeErrorResponse(raceServiceResult raceServiceResult, responseWriter http
 		ResponseCode: raceServiceResult,
 	}
 
-	writeResponse(responseWriter, rankingDataResponse)
+	writeResponse(w, rankingDataResponse)
 }
 
-func writeResponse(responseWriter http.ResponseWriter, rankingDataResponse rankingsResponseRankingDataResponse) {
-	responseBody, err := xml.Marshal(rankingDataResponse)
+func writeResponse(w http.ResponseWriter, rankingDataResponse rankingsResponseRankingDataResponse) {
+	w.Header().Set("Content-Type", "text/xml")
+	w.Write([]byte(xml.Header))
+	err := xml.NewEncoder(w).Encode(rankingDataResponse)
 	if err != nil {
-		panic(err)
-	}
-
-	responseBody = append([]byte(xml.Header), responseBody...)
-
-	responseWriter.Header().Set("Content-Length", strconv.Itoa(len(responseBody)))
-	responseWriter.Header().Set("Content-Type", "text/xml")
-	if _, err := responseWriter.Write(responseBody); err != nil {
 		logging.Error("Failed to write response:", err)
 	}
 }
