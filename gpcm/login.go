@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"math/rand"
 	"owfc/common"
-	"owfc/database"
 	"owfc/logging"
 	"owfc/qr2"
 	"strconv"
@@ -118,22 +117,14 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 
 	proof := generateProof(g.Challenge, nasChallenge, command.OtherValues["authtoken"], command.OtherValues["challenge"])
 
-	if !g.performLoginWithDatabase(authTokenObj.UserID, common.NullTerminatedString(authTokenObj.GsbrCode[:])) {
+	g.Profile, err = db.GetProfile(authTokenObj.ProfileID)
+	if err != nil {
+		logging.Error(g.ModuleName, "Error getting profile:", err.Error())
+		g.replyError(ErrLogin)
 		return
 	}
 
-	if g.Profile.Created {
-		logging.Event(
-			"profile_created",
-			map[string]any{
-				"user_id":    g.Profile.UserID,
-				"profile_id": g.Profile.ID,
-				"game_name":  g.GameName,
-				"ip_address": g.RemoteAddr,
-			},
-		)
-
-	}
+	logging.Notice("DATABASE", "Log in GameSpy profile:", aurora.Cyan(authTokenObj.UserID), "-", aurora.Cyan(authTokenObj.ProfileID))
 
 	g.ModuleName = "GPCM:" + strconv.FormatInt(int64(g.Profile.ID), 10) + "*"
 	g.ModuleName += "/" + common.CalcFriendCodeString(g.Profile.ID, g.Profile.GsbrCode[:4]) + "*"
@@ -175,7 +166,7 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 	g.ModuleName += "/" + common.CalcFriendCodeString(g.Profile.ID, g.Profile.GsbrCode[:4])
 
 	// Notify QR2 of the login
-	qr2.Login(g.Profile.ID, g.GameCode, g.InGameName, g.ConsoleFriendCode, g.Profile.GsbrCode[:4], g.RemoteAddr, g.Profile.Restricted)
+	qr2.Login(g.Profile.ID, g.GameCode, g.InGameName, g.ConsoleFriendCode, g.Profile.GsbrCode[:4], g.RemoteAddr)
 
 	replyUserId := g.Profile.UserID
 	if g.UnitCode == UnitCodeDS {
@@ -236,51 +227,4 @@ func (g *GameSpySession) login(command common.GameSpyCommand) {
 			"ip_address":   g.RemoteAddr,
 		},
 	)
-}
-
-func (g *GameSpySession) performLoginWithDatabase(userId uint64, gsbrCode string) bool {
-	var err error
-	g.Profile, err = db.LoginUserToGPCM(userId, gsbrCode, strings.Split(g.RemoteAddr, ":")[0], g.InGameName)
-	if err != nil {
-		logging.Error(g.ModuleName, "DB error:", err)
-
-		switch err {
-		case database.ErrProfileIDInUse:
-			g.replyError(GPError{
-				ErrorCode:   ErrLogin.ErrorCode,
-				ErrorString: "The profile ID is already in use.",
-				Fatal:       true,
-			})
-		case database.ErrReservedProfileIDRange:
-			g.replyError(GPError{
-				ErrorCode:   ErrLogin.ErrorCode,
-				ErrorString: "The profile ID is in a reserved range.",
-				Fatal:       true,
-			})
-		case database.ErrProfileBannedTOS:
-			g.replyError(GPError{
-				ErrorCode:   ErrLogin.ErrorCode,
-				ErrorString: "The profile is banned from the service. Reason: " + g.Profile.BanReason,
-				Fatal:       true,
-			})
-		default:
-			g.replyError(GPError{
-				ErrorCode:   ErrLogin.ErrorCode,
-				ErrorString: "There was an error logging in to the GP backend.",
-				Fatal:       true,
-			})
-		}
-
-		return false
-	}
-
-	return true
-}
-
-func IsLoggedIn(profileID uint32) bool {
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	session, exists := sessions[profileID]
-	return exists && session.LoggedIn
 }

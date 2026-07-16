@@ -246,32 +246,7 @@ func (g *GameSpySession) mungeMatchReservation(toSession *GameSpySession, msgMat
 		msgMatchData.Reservation.LocalPort = 0
 	}
 
-	if !g.Profile.Restricted && !toSession.Profile.Restricted {
-		return true
-	}
-
-	// Check with QR2 if the room is public or private
-	resvError := qr2.CheckGPReservationAllowed(g.QR2IP, g.Profile.ID, uint32(toProfileId), msgMatchData.Reservation.MatchType)
-	if resvError == "ok" {
-		return true
-	}
-
-	// Figure out which error to return
-	if resvError == "restricted" || resvError == "restricted_join" {
-		logging.Error(g.ModuleName, "RESERVATION: Restricted profile tried to connect to public room")
-
-		// Kick the player(s)
-		if g.Profile.Restricted {
-			kickPlayer(toSession.Profile.ID, resvError)
-		}
-		if toSession.Profile.Restricted {
-			kickPlayer(g.Profile.ID, resvError)
-		}
-	}
-
-	logging.Warn(g.ModuleName, "RESERVATION: Not allowed:", resvError)
-	// Otherwise generic error?
-	return false
+	return true
 }
 
 func (g *GameSpySession) mungeMatchReservationResult(cmd byte, toSession *GameSpySession, msgMatchData *common.MatchCommandData, toProfileId uint32, sameAddress bool) bool {

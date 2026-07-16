@@ -85,9 +85,9 @@ func (g *GameStatsSession) authp(command common.GameSpyCommand) {
 		return
 	}
 
-	g.Profile, err = db.LoginUserToGameStats(authTokenObj.UserID, common.NullTerminatedString(authTokenObj.GsbrCode[:]))
+	g.Profile, err = db.GetProfile(authTokenObj.ProfileID)
 	if err != nil {
-		logging.Error(g.ModuleName, "Error logging in user:", err.Error())
+		logging.Error(g.ModuleName, "Error getting profile:", err.Error())
 		g.Write(errorCmd)
 		return
 	}

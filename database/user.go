@@ -7,7 +7,8 @@ import (
 
 const (
 	InsertUser          = `INSERT INTO users (id, unitcd, macadr, passwd, csnum) VALUES (?, ?, ?, ?, ?)`
-	GetUser             = `SELECT unitcd, macadr, passwd, csnum FROM users WHERE id = ?`
+	GetUser             = `SELECT unitcd, macadr, passwd, csnum, banned FROM users WHERE id = ?`
+	UpdateUserName      = `UPDATE users SET name = ? WHERE id = ?`
 	IsUserIDInUse       = `SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)`
 	IsMACInUse          = `SELECT EXISTS(SELECT 1 FROM users WHERE macadr = ?)`
 	IsSerialNumberInUse = `SELECT EXISTS(SELECT 1 FROM users WHERE csnum = ?)`
@@ -15,10 +16,12 @@ const (
 
 type User struct {
 	ID           uint64
+	Name         string
 	UnitCode     int
 	MacAddress   string
 	Password     int    // ds only
 	SerialNumber string // wii only
+	Banned       bool
 }
 
 func (u User) IsWii() bool {
@@ -31,7 +34,7 @@ var (
 	ErrSerialNumberInUse = errors.New("serial number is already in use")
 )
 
-func (c *Connection) CreateUser(user *User) error {
+func (c *Connection) CreateUser(user User) error {
 	var exists bool
 
 	err := c.pool.QueryRowContext(c.ctx, IsUserIDInUse, user.ID).Scan(&exists)
@@ -76,7 +79,7 @@ func (c *Connection) GetUser(userId uint64) (User, bool) {
 	var user User
 	var password sql.NullInt16
 	var serial sql.NullString
-	err := c.pool.QueryRowContext(c.ctx, GetUser, userId).Scan(&user.UnitCode, &user.MacAddress, &password, &serial)
+	err := c.pool.QueryRowContext(c.ctx, GetUser, userId).Scan(&user.UnitCode, &user.MacAddress, &password, &serial, &user.Banned)
 	if err != nil {
 		return User{}, false
 	}
@@ -86,4 +89,13 @@ func (c *Connection) GetUser(userId uint64) (User, bool) {
 	user.SerialNumber = serial.String
 
 	return user, true
+}
+
+func (c *Connection) UpdateUserName(userId uint64, name string) error {
+	_, err := c.pool.ExecContext(c.ctx, UpdateUserName, name, userId)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

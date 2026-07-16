@@ -46,12 +46,12 @@ var (
 type NASAuthToken struct {
 	IssueTime         uint64
 	UserID            uint64
+	ProfileID         uint32
 	ConsoleFriendCode uint64
 	Region            byte
 	Lang              byte
 	UnitCode          byte
 	GameCode          [4]byte
-	GsbrCode          [11]byte
 	Challenge         [8]byte
 	InGameScreenName  [64]byte
 	Magic             [8]byte

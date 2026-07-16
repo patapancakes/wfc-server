@@ -86,18 +86,9 @@ CREATE TABLE IF NOT EXISTS `profiles` (
   `user_id` bigint(20) unsigned NOT NULL,
   `gsbrcd` char(11) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
   `firstname` tinytext CHARACTER SET ascii COLLATE ascii_general_ci DEFAULT NULL,
-  `lastname` tinytext CHARACTER SET ascii COLLATE ascii_general_ci DEFAULT NULL,
-  `last_ingamesn` tinytext NOT NULL DEFAULT '',
-  `last_ip_address` tinytext CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL DEFAULT '',
-  `has_ban` tinyint(1) DEFAULT 0,
-  `ban_issued` timestamp NULL DEFAULT NULL,
-  `ban_expires` timestamp NULL DEFAULT NULL,
-  `ban_reason` tinytext DEFAULT NULL,
-  `ban_reason_hidden` tinytext DEFAULT NULL,
-  `ban_moderator` tinytext DEFAULT NULL,
-  `ban_tos` tinyint(1) DEFAULT NULL,
+  `lastname` tinytext CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL DEFAULT '',
   PRIMARY KEY (`id`) USING BTREE,
-  KEY `user_id` (`user_id`),
+  UNIQUE KEY `user_id_gsbrcd` (`user_id`,`gsbrcd`),
   CONSTRAINT `FK_profiles_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1000000000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -123,10 +114,12 @@ CREATE TABLE IF NOT EXISTS `sake_records` (
 -- Dumping structure for table wfc.users
 CREATE TABLE IF NOT EXISTS `users` (
   `id` bigint(20) unsigned NOT NULL,
+  `name` tinytext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `unitcd` tinyint(1) unsigned NOT NULL,
   `macadr` char(12) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
   `passwd` smallint(6) DEFAULT NULL COMMENT 'ds only',
   `csnum` char(11) CHARACTER SET ascii COLLATE ascii_general_ci DEFAULT NULL COMMENT 'wii only',
+  `banned` tinyint(1) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `macadr` (`macadr`),
   UNIQUE KEY `csnum` (`csnum`)

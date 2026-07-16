@@ -303,29 +303,6 @@ func processClientMessage(moduleName string, sender, receiver *Session, message 
 
 	switch cmd {
 	case common.MatchReservation:
-		resvError := checkReservationAllowed(moduleName, sender, receiver, matchData.Reservation.MatchType)
-		if resvError != "ok" {
-			if resvError == "restricted" || resvError == "restricted_join" {
-				logging.Error(moduleName, "RESERVATION: Restricted player attempted to join a public match")
-
-				if sender.login != nil && sender.login.Restricted {
-					profileId := sender.login.ProfileID
-
-					mutex.Unlock()
-					gpErrorCallback(profileId, resvError)
-					mutex.Lock()
-				}
-				if receiver.login != nil && receiver.login.Restricted {
-					profileId := receiver.login.ProfileID
-
-					mutex.Unlock()
-					gpErrorCallback(profileId, resvError)
-					mutex.Lock()
-				}
-			}
-			return
-		}
-
 		sender.Reservation = matchData
 		sender.ReservationID = receiver.SearchID
 

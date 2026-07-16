@@ -196,11 +196,6 @@ func (g *GameSpySession) setStatus(command common.GameSpyCommand) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	if status == common.MatchAnybody && g.Profile.Restricted {
-		logging.Warn(g.ModuleName, "Restricted profile searching for public rooms")
-		kickPlayer(g.Profile.ID, "restricted_join")
-	}
-
 	g.LocString = locstring
 	g.Status = statusMsg
 
