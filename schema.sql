@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS `sake_records` (
 -- Dumping structure for table wfc.users
 CREATE TABLE IF NOT EXISTS `users` (
   `id` bigint(20) unsigned NOT NULL,
-  `name` tinytext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `name` tinytext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `unitcd` tinyint(1) unsigned NOT NULL,
   `macadr` char(12) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
   `passwd` smallint(6) DEFAULT NULL COMMENT 'ds only',
